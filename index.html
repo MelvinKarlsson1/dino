@@ -85,6 +85,11 @@
       color: white;
     }
 
+    .btn-blacklist {
+      background: linear-gradient(135deg, #6b2737, #4a1a28);
+      color: white;
+    }
+
     .secondary-btns {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -200,8 +205,8 @@
     .btn-expensive { background: #533483; color: white; }
     .btn-another { background: #334455; color: #e0e0e0; }
 
-    /* History panel */
-    .history-panel {
+    /* Panels (shared) */
+    .panel {
       background: linear-gradient(135deg, #1e2a3a, #2a3a4a);
       border-radius: 20px;
       padding: 25px;
@@ -210,9 +215,9 @@
       display: none;
     }
 
-    .history-panel.active { display: block; animation: slideIn 0.4s ease; }
+    .panel.active { display: block; animation: slideIn 0.4s ease; }
 
-    .history-panel h2 {
+    .panel h2 {
       font-family: 'Fredoka One', cursive;
       color: #f5a623;
       margin-bottom: 15px;
@@ -223,6 +228,9 @@
       border-radius: 10px;
       padding: 12px 16px;
       margin-bottom: 8px;
+    }
+
+    .history-item-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -230,30 +238,148 @@
 
     .history-item .name { font-weight: 700; color: #e0e0e0; }
     .history-item .date { color: #8899aa; font-size: 0.9em; }
-    .history-item .rating { font-size: 0.85em; color: #f5a623; }
+    .history-item .meta { font-size: 0.85em; color: #8899aa; margin-top: 4px; }
+
+    .history-item .ratings {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    .history-item .rating-badge {
+      font-size: 0.8em;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-weight: 700;
+    }
+
+    .rating-taste { background: #e94560; color: white; }
+    .rating-price { background: #40916c; color: white; }
+    .rating-vibe { background: #533483; color: white; }
+
+    .rate-btn {
+      margin-top: 8px;
+      padding: 6px 14px;
+      background: #f5a623;
+      color: #1a1a2e;
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.85em;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .rate-btn:hover { transform: scale(1.05); }
+
+    /* Rating form inline */
+    .rating-form {
+      margin-top: 10px;
+      padding: 12px;
+      background: #1a2a3a;
+      border-radius: 10px;
+    }
+
+    .rating-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .rating-row label {
+      color: #8899aa;
+      font-weight: 600;
+      font-size: 0.9em;
+    }
+
+    .star-selector {
+      display: flex;
+      gap: 4px;
+    }
+
+    .star-selector span {
+      font-size: 1.4em;
+      cursor: pointer;
+      opacity: 0.3;
+      transition: opacity 0.15s;
+    }
+
+    .star-selector span.active { opacity: 1; }
+    .star-selector span:hover { opacity: 0.8; }
+
+    .rating-form .submit-btn {
+      padding: 10px;
+      font-size: 0.95em;
+      margin-top: 4px;
+    }
+
+    /* Blacklist items */
+    .blacklist-item {
+      background: #0f3460;
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .blacklist-item .name { font-weight: 700; color: #e0e0e0; }
+    .blacklist-item .reason {
+      font-size: 0.85em;
+      color: #e94560;
+      margin-top: 2px;
+    }
+    .blacklist-item .cuisine-sm {
+      font-size: 0.8em;
+      color: #8899aa;
+    }
+
+    .restore-btn {
+      padding: 8px 14px;
+      background: #40916c;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.85em;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .restore-btn:hover { transform: scale(1.05); }
+
+    .blacklist-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+
+    .blacklist-tab {
+      padding: 6px 14px;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.85em;
+      background: #334455;
+      color: #8899aa;
+      transition: all 0.2s;
+    }
+
+    .blacklist-tab.active {
+      background: #e94560;
+      color: white;
+    }
 
     .empty-state {
       text-align: center;
       padding: 30px;
       color: #8899aa;
-    }
-
-    /* Add restaurant panel */
-    .add-panel {
-      background: linear-gradient(135deg, #1e2a3a, #2a3a4a);
-      border-radius: 20px;
-      padding: 25px;
-      margin: 20px 0;
-      border: 1px solid #334455;
-      display: none;
-    }
-
-    .add-panel.active { display: block; animation: slideIn 0.4s ease; }
-
-    .add-panel h2 {
-      font-family: 'Fredoka One', cursive;
-      color: #f5a623;
-      margin-bottom: 15px;
     }
 
     .form-group {
@@ -403,6 +529,7 @@
 
     <button class="main-btn btn-history" onclick="showHistory()">📜 Where have we been?</button>
     <button class="main-btn btn-add" onclick="showAddPanel()">➕ Add a restaurant</button>
+    <button class="main-btn btn-blacklist" onclick="showBlacklist()">🚫 Blacklisted restaurants</button>
 
     <!-- Suggestion Card -->
     <div class="suggestion-card" id="suggestionCard">
@@ -415,20 +542,32 @@
       <div class="action-btns">
         <button class="action-btn btn-go" onclick="confirmVisit()">✅ Let's go!</button>
         <button class="action-btn btn-another" onclick="suggestDinner()">🔄 Another one</button>
-        <button class="action-btn btn-nope" onclick="blacklist('Blacklisted - Bad Food')">👎 Bad food</button>
-        <button class="action-btn btn-far" onclick="blacklist('Blacklisted - Too Far')">🚶 Too far</button>
-        <button class="action-btn btn-expensive" onclick="blacklist('Blacklisted - Too Expensive')">💸 Too pricey</button>
+        <button class="action-btn btn-nope" onclick="blacklistCurrent('Blacklisted - Bad Food')">👎 Bad food</button>
+        <button class="action-btn btn-far" onclick="blacklistCurrent('Blacklisted - Too Far')">🚶 Too far</button>
+        <button class="action-btn btn-expensive" onclick="blacklistCurrent('Blacklisted - Too Expensive')">💸 Too pricey</button>
       </div>
     </div>
 
     <!-- History Panel -->
-    <div class="history-panel" id="historyPanel">
+    <div class="panel" id="historyPanel">
       <h2>📜 Recent visits</h2>
       <div id="historyList"></div>
     </div>
 
+    <!-- Blacklist Panel -->
+    <div class="panel" id="blacklistPanel">
+      <h2>🚫 Blacklisted restaurants</h2>
+      <div class="blacklist-tabs">
+        <button class="blacklist-tab active" onclick="filterBlacklist('all')">All</button>
+        <button class="blacklist-tab" onclick="filterBlacklist('Bad Food')">👎 Bad food</button>
+        <button class="blacklist-tab" onclick="filterBlacklist('Too Far')">🚶 Too far</button>
+        <button class="blacklist-tab" onclick="filterBlacklist('Too Expensive')">💸 Too pricey</button>
+      </div>
+      <div id="blacklistList"></div>
+    </div>
+
     <!-- Add Restaurant Panel -->
-    <div class="add-panel" id="addPanel">
+    <div class="panel" id="addPanel">
       <h2>➕ Add a restaurant</h2>
       <div class="form-group">
         <label>Restaurant name</label>
@@ -477,6 +616,8 @@
     let currentSuggestion = null;
     let userName = '';
     let lastMode = '';
+    let blacklistData = [];
+    let blacklistFilter = 'all';
 
     // Check if user has a name stored
     function init() {
@@ -553,7 +694,6 @@
       hideAll();
 
       try {
-        // Get restaurants that aren't blacklisted
         let query = 'status=eq.Available&order=name';
         const restaurants = await supabase('restaurants', 'GET', { query });
 
@@ -562,7 +702,6 @@
           return;
         }
 
-        // Get visits from last 30 days
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         const dateStr = thirtyDaysAgo.toISOString().split('T')[0];
@@ -572,11 +711,8 @@
         });
 
         const recentIds = new Set((recentVisits || []).map(v => v.restaurant_id));
-
-        // Filter out recently visited
         let available = restaurants.filter(r => !recentIds.has(r.id));
 
-        // Apply mode filters
         if (mode === 'budget') {
           available = available.filter(r => r.price_range === 'Budget');
         } else if (mode === 'friday') {
@@ -584,7 +720,6 @@
         } else if (mode === 'quick') {
           available = available.filter(r => r.walking_minutes <= 4);
         } else if (mode === 'new') {
-          // Get ALL visits ever
           const allVisits = await supabase('visits', 'GET', { query: 'select=restaurant_id' });
           const allVisitedIds = new Set((allVisits || []).map(v => v.restaurant_id));
           available = available.filter(r => !allVisitedIds.has(r.id));
@@ -595,11 +730,9 @@
           return;
         }
 
-        // Random pick
         const pick = available[Math.floor(Math.random() * available.length)];
         currentSuggestion = pick;
 
-        // Show the card
         document.getElementById('sugName').textContent = pick.name;
         document.getElementById('sugCuisine').textContent = pick.cuisine || 'Mixed';
         document.getElementById('sugPrice').textContent = pick.price_range || 'Mid';
@@ -636,7 +769,7 @@
       }
     }
 
-    async function blacklist(reason) {
+    async function blacklistCurrent(reason) {
       if (!currentSuggestion) return;
 
       try {
@@ -647,8 +780,6 @@
 
         const reasonText = reason.replace('Blacklisted - ', '').toLowerCase();
         showToast(`Got it — ${currentSuggestion.name} is off the list (${reasonText}) 🦕`);
-
-        // Suggest another one
         suggestDinner(lastMode);
       } catch (err) {
         console.error(err);
@@ -656,13 +787,92 @@
       }
     }
 
+    // --- BLACKLIST VIEW ---
+    async function showBlacklist() {
+      hideAll();
+
+      try {
+        const restaurants = await supabase('restaurants', 'GET', {
+          query: 'status=neq.Available&order=name'
+        });
+
+        blacklistData = restaurants || [];
+        blacklistFilter = 'all';
+
+        // Reset tab styles
+        document.querySelectorAll('.blacklist-tab').forEach(t => t.classList.remove('active'));
+        document.querySelector('.blacklist-tab').classList.add('active');
+
+        renderBlacklist();
+        document.getElementById('blacklistPanel').classList.add('active');
+      } catch (err) {
+        console.error(err);
+        showToast('Could not load blacklist!', true);
+      }
+    }
+
+    function filterBlacklist(filter) {
+      blacklistFilter = filter;
+      document.querySelectorAll('.blacklist-tab').forEach(t => {
+        const tabFilter = t.textContent.includes('All') ? 'all' :
+                          t.textContent.includes('Bad') ? 'Bad Food' :
+                          t.textContent.includes('far') ? 'Too Far' : 'Too Expensive';
+        t.classList.toggle('active', tabFilter === filter);
+      });
+      renderBlacklist();
+    }
+
+    function renderBlacklist() {
+      const list = document.getElementById('blacklistList');
+      let filtered = blacklistData;
+
+      if (blacklistFilter !== 'all') {
+        filtered = blacklistData.filter(r => r.status.includes(blacklistFilter));
+      }
+
+      if (filtered.length === 0) {
+        list.innerHTML = '<div class="empty-state">🦕 No blacklisted restaurants here!</div>';
+        return;
+      }
+
+      list.innerHTML = filtered.map(r => {
+        const reason = r.status.replace('Blacklisted - ', '');
+        const emoji = reason === 'Bad Food' ? '👎' : reason === 'Too Far' ? '🚶' : '💸';
+        return `
+          <div class="blacklist-item">
+            <div>
+              <div class="name">${r.name}</div>
+              <div class="cuisine-sm">${r.cuisine || 'Mixed'} · ${r.address || ''}</div>
+              <div class="reason">${emoji} ${reason}</div>
+            </div>
+            <button class="restore-btn" onclick="restoreRestaurant(${r.id}, '${r.name.replace(/'/g, "\\'")}')">✅ Restore</button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function restoreRestaurant(id, name) {
+      try {
+        await supabase('restaurants', 'PATCH', {
+          query: `id=eq.${id}`,
+          body: { status: 'Available' }
+        });
+        showToast(`${name} is back on the menu! 🦕`);
+        showBlacklist();
+      } catch (err) {
+        console.error(err);
+        showToast('Could not restore!', true);
+      }
+    }
+
+    // --- HISTORY WITH RATINGS ---
     async function showHistory() {
       hideAll();
 
       try {
         const visits = await supabase('visits', 'GET', {
           query: 'order=visited_date.desc&limit=20',
-          select: 'id,visited_date,suggested_by,rating,restaurant_id,restaurants(name,cuisine)'
+          select: 'id,visited_date,suggested_by,rating,taste_rating,price_rating,vibe_rating,restaurant_id,restaurants(name,cuisine)'
         });
 
         const list = document.getElementById('historyList');
@@ -676,12 +886,30 @@
             const date = new Date(v.visited_date).toLocaleDateString('sv-SE');
             const div = document.createElement('div');
             div.className = 'history-item';
+            div.id = `visit-${v.id}`;
+
+            const hasRatings = v.taste_rating || v.price_rating || v.vibe_rating;
+
+            let ratingsHTML = '';
+            if (hasRatings) {
+              ratingsHTML = `<div class="ratings">
+                ${v.taste_rating ? `<span class="rating-badge rating-taste">Taste ${'★'.repeat(v.taste_rating)}${'☆'.repeat(5-v.taste_rating)}</span>` : ''}
+                ${v.price_rating ? `<span class="rating-badge rating-price">Price ${'★'.repeat(v.price_rating)}${'☆'.repeat(5-v.price_rating)}</span>` : ''}
+                ${v.vibe_rating ? `<span class="rating-badge rating-vibe">Vibe ${'★'.repeat(v.vibe_rating)}${'☆'.repeat(5-v.vibe_rating)}</span>` : ''}
+              </div>`;
+            } else {
+              ratingsHTML = `<button class="rate-btn" onclick="showRatingForm(${v.id})">⭐ Rate this visit</button>`;
+            }
+
             div.innerHTML = `
-              <div>
-                <div class="name">${name}</div>
-                <div class="rating">${v.rating || ''} · by ${v.suggested_by || 'unknown'}</div>
+              <div class="history-item-header">
+                <div>
+                  <div class="name">${name}</div>
+                  <div class="meta">by ${v.suggested_by || 'unknown'}</div>
+                </div>
+                <div class="date">${date}</div>
               </div>
-              <div class="date">${date}</div>
+              ${ratingsHTML}
             `;
             list.appendChild(div);
           });
@@ -691,6 +919,77 @@
       } catch (err) {
         console.error(err);
         showToast('Could not load history!', true);
+      }
+    }
+
+    function showRatingForm(visitId) {
+      const item = document.getElementById(`visit-${visitId}`);
+      const btn = item.querySelector('.rate-btn');
+      if (btn) btn.remove();
+
+      const existing = item.querySelector('.rating-form');
+      if (existing) return;
+
+      const form = document.createElement('div');
+      form.className = 'rating-form';
+      form.innerHTML = `
+        <div class="rating-row">
+          <label>🍽️ Taste</label>
+          <div class="star-selector" data-field="taste" data-visit="${visitId}">
+            ${[1,2,3,4,5].map(n => `<span onclick="setStar(this, ${n})">★</span>`).join('')}
+          </div>
+        </div>
+        <div class="rating-row">
+          <label>💰 Price</label>
+          <div class="star-selector" data-field="price" data-visit="${visitId}">
+            ${[1,2,3,4,5].map(n => `<span onclick="setStar(this, ${n})">★</span>`).join('')}
+          </div>
+        </div>
+        <div class="rating-row">
+          <label>✨ Vibe</label>
+          <div class="star-selector" data-field="vibe" data-visit="${visitId}">
+            ${[1,2,3,4,5].map(n => `<span onclick="setStar(this, ${n})">★</span>`).join('')}
+          </div>
+        </div>
+        <button class="submit-btn" onclick="submitRating(${visitId})">Save rating 🦕</button>
+      `;
+      item.appendChild(form);
+    }
+
+    function setStar(el, value) {
+      const container = el.parentElement;
+      container.dataset.value = value;
+      const stars = container.querySelectorAll('span');
+      stars.forEach((s, i) => s.classList.toggle('active', i < value));
+    }
+
+    async function submitRating(visitId) {
+      const item = document.getElementById(`visit-${visitId}`);
+      const taste = item.querySelector('[data-field="taste"]')?.dataset.value;
+      const price = item.querySelector('[data-field="price"]')?.dataset.value;
+      const vibe = item.querySelector('[data-field="vibe"]')?.dataset.value;
+
+      if (!taste && !price && !vibe) {
+        showToast('Tap some stars first!', true);
+        return;
+      }
+
+      try {
+        const body = {};
+        if (taste) body.taste_rating = parseInt(taste);
+        if (price) body.price_rating = parseInt(price);
+        if (vibe) body.vibe_rating = parseInt(vibe);
+
+        await supabase('visits', 'PATCH', {
+          query: `id=eq.${visitId}`,
+          body
+        });
+
+        showToast('Rating saved! 🦕⭐');
+        showHistory();
+      } catch (err) {
+        console.error(err);
+        showToast('Could not save rating!', true);
       }
     }
 
@@ -720,7 +1019,6 @@
         showToast(`Added ${name} to Dino's list! 🦕`);
         hideAll();
 
-        // Clear form
         document.getElementById('addName').value = '';
         document.getElementById('addCuisine').value = '';
         document.getElementById('addAddress').value = '';
@@ -736,6 +1034,7 @@
       document.getElementById('suggestionCard').classList.remove('active');
       document.getElementById('historyPanel').classList.remove('active');
       document.getElementById('addPanel').classList.remove('active');
+      document.getElementById('blacklistPanel').classList.remove('active');
     }
 
     function showToast(msg, isError = false) {
@@ -745,7 +1044,6 @@
       setTimeout(() => toast.className = 'toast', 3000);
     }
 
-    // Initialize
     init();
   </script>
 </body>
