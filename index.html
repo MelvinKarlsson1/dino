@@ -938,6 +938,7 @@
                 <div class="date">${date}</div>
               </div>
               ${ratingsHTML}
+              <button class="rate-btn" onclick="blacklistFromHistory(${v.restaurant_id}, '${name.replace(/'/g, "\\'")}')">🚫 Blacklist</button>
             `;
             list.appendChild(div);
           });
@@ -1018,6 +1019,23 @@
       } catch (err) {
         console.error(err);
         showToast('Could not save rating!', true);
+      }
+    }
+
+    async function blacklistFromHistory(restaurantId, name) {
+      const reason = prompt(`Why blacklist ${name}?`, 'Blacklisted - Bad experience');
+      if (!reason) return;
+      const status = reason.startsWith('Blacklisted') ? reason : `Blacklisted - ${reason}`;
+      try {
+        await supabase('restaurants', 'PATCH', {
+          query: `id=eq.${restaurantId}`,
+          body: { status }
+        });
+        showToast(`${name} has been blacklisted`);
+        showHistory();
+      } catch (err) {
+        console.error(err);
+        showToast('Could not blacklist!', true);
       }
     }
 
