@@ -938,7 +938,9 @@
                 <div class="date">${date}</div>
               </div>
               ${ratingsHTML}
-              <button class="rate-btn" onclick="blacklistFromHistory(${v.restaurant_id}, '${name.replace(/'/g, "\\'")}')">🚫 Blacklist</button>
+              <div class="blacklist-history-wrap" id="bl-wrap-${v.id}">
+                <button class="rate-btn" onclick="showBlacklistOptions(${v.id}, ${v.restaurant_id}, '${name.replace(/'/g, "\\'")}')">🚫 Blacklist</button>
+              </div>
             `;
             list.appendChild(div);
           });
@@ -1022,14 +1024,22 @@
       }
     }
 
-    async function blacklistFromHistory(restaurantId, name) {
-      const reason = prompt(`Why blacklist ${name}?`, 'Blacklisted - Bad experience');
-      if (!reason) return;
-      const status = reason.startsWith('Blacklisted') ? reason : `Blacklisted - ${reason}`;
+    function showBlacklistOptions(visitId, restaurantId, name) {
+      const wrap = document.getElementById(`bl-wrap-${visitId}`);
+      wrap.innerHTML = `
+        <div class="action-btns" style="margin-top:0">
+          <button class="action-btn btn-nope" onclick="blacklistFromHistory(${restaurantId}, '${name.replace(/'/g, "\\'")}', 'Bad Food')">Bad food</button>
+          <button class="action-btn btn-far" onclick="blacklistFromHistory(${restaurantId}, '${name.replace(/'/g, "\\'")}', 'Too Far')">Too far</button>
+          <button class="action-btn btn-expensive" onclick="blacklistFromHistory(${restaurantId}, '${name.replace(/'/g, "\\'")}', 'Too Expensive')">Too pricey</button>
+        </div>
+      `;
+    }
+
+    async function blacklistFromHistory(restaurantId, name, reason) {
       try {
         await supabase('restaurants', 'PATCH', {
           query: `id=eq.${restaurantId}`,
-          body: { status }
+          body: { status: `Blacklisted - ${reason}` }
         });
         showToast(`${name} has been blacklisted`);
         showHistory();
