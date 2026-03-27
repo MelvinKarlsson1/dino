@@ -5,15 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dino - Dinner Buddy</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      font-family: 'Nunito', sans-serif;
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #0d0d0d 0%, #1a1a1a 50%, #141414 100%);
       min-height: 100vh;
-      color: #e0e0e0;
+      color: #d4d0c8;
     }
 
     .app {
@@ -28,66 +28,73 @@
     }
 
     .dino-emoji {
-      font-size: 80px;
-      animation: bounce 2s ease infinite;
+      font-size: 60px;
+      animation: float 3s ease-in-out infinite;
     }
 
-    @keyframes bounce {
+    @keyframes float {
       0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
+      50% { transform: translateY(-6px); }
     }
 
     .header h1 {
-      font-family: 'Fredoka One', cursive;
+      font-family: 'Playfair Display', serif;
       font-size: 2.5em;
-      background: linear-gradient(135deg, #e94560, #f5a623);
+      background: linear-gradient(135deg, #c9a84c, #e8d5a3);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      letter-spacing: 0.02em;
     }
 
     .header p {
-      color: #8899aa;
+      color: #7a7568;
       margin-top: 5px;
-      font-size: 1.1em;
+      font-size: 1em;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      font-weight: 500;
     }
 
     .main-btn {
       display: block;
       width: 100%;
-      padding: 20px;
-      font-size: 1.3em;
-      font-family: 'Fredoka One', cursive;
-      border: none;
-      border-radius: 16px;
+      padding: 18px;
+      font-size: 1.1em;
+      font-family: 'Playfair Display', serif;
+      font-weight: 600;
+      border: 1px solid rgba(201, 168, 76, 0.2);
+      border-radius: 10px;
       cursor: pointer;
       transition: all 0.3s ease;
-      margin-bottom: 15px;
+      margin-bottom: 12px;
+      letter-spacing: 0.03em;
     }
 
     .main-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+      border-color: rgba(201, 168, 76, 0.4);
     }
 
     .btn-suggest {
-      background: linear-gradient(135deg, #e94560, #c23152);
-      color: white;
+      background: linear-gradient(135deg, #c9a84c, #a8893a);
+      color: #0d0d0d;
     }
 
     .btn-history {
-      background: linear-gradient(135deg, #533483, #0f3460);
-      color: white;
+      background: linear-gradient(135deg, #1e1e1e, #2a2a2a);
+      color: #d4d0c8;
     }
 
     .btn-add {
-      background: linear-gradient(135deg, #2d6a4f, #40916c);
-      color: white;
+      background: linear-gradient(135deg, #1e1e1e, #2a2a2a);
+      color: #d4d0c8;
     }
 
     .btn-blacklist {
-      background: linear-gradient(135deg, #6b2737, #4a1a28);
-      color: white;
+      background: linear-gradient(135deg, #1e1e1e, #2a2a2a);
+      color: #d4d0c8;
     }
 
     .secondary-btns {
@@ -99,32 +106,33 @@
 
     .sec-btn {
       padding: 14px;
-      font-size: 0.95em;
-      font-weight: 700;
-      border: none;
-      border-radius: 12px;
+      font-size: 0.9em;
+      font-weight: 600;
+      border: 1px solid rgba(201, 168, 76, 0.15);
+      border-radius: 8px;
       cursor: pointer;
       transition: all 0.3s ease;
-      color: white;
+      color: #d4d0c8;
     }
 
     .sec-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      border-color: rgba(201, 168, 76, 0.3);
     }
 
-    .btn-quick { background: linear-gradient(135deg, #f5a623, #e08a1e); }
-    .btn-friday { background: linear-gradient(135deg, #e94560, #c23152); }
-    .btn-cheap { background: linear-gradient(135deg, #2d6a4f, #40916c); }
-    .btn-new { background: linear-gradient(135deg, #533483, #7b2cbf); }
+    .btn-quick { background: linear-gradient(135deg, #1e1e1e, #282828); }
+    .btn-friday { background: linear-gradient(135deg, #2a1f1f, #332020); }
+    .btn-cheap { background: linear-gradient(135deg, #1a2420, #1e2e26); }
+    .btn-new { background: linear-gradient(135deg, #1e1a28, #28203a); }
 
     /* Suggestion card */
     .suggestion-card {
-      background: linear-gradient(135deg, #1e2a3a, #2a3a4a);
-      border-radius: 20px;
+      background: linear-gradient(135deg, #1a1a1a, #222222);
+      border-radius: 12px;
       padding: 25px;
       margin: 20px 0;
-      border: 1px solid #334455;
+      border: 1px solid rgba(201, 168, 76, 0.15);
       display: none;
     }
 
@@ -136,48 +144,50 @@
     }
 
     .suggestion-card h2 {
-      font-family: 'Fredoka One', cursive;
-      font-size: 1.6em;
-      color: #f5a623;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5em;
+      color: #c9a84c;
       margin-bottom: 5px;
     }
 
     .suggestion-card .cuisine-tag {
       display: inline-block;
-      background: #e94560;
-      color: white;
+      background: rgba(201, 168, 76, 0.15);
+      color: #c9a84c;
       padding: 3px 12px;
-      border-radius: 20px;
-      font-size: 0.85em;
-      font-weight: 700;
+      border-radius: 4px;
+      font-size: 0.8em;
+      font-weight: 600;
       margin-bottom: 12px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
     }
 
     .suggestion-card .price-tag {
       display: inline-block;
-      background: #40916c;
-      color: white;
+      background: rgba(255, 255, 255, 0.08);
+      color: #a0998a;
       padding: 3px 12px;
-      border-radius: 20px;
-      font-size: 0.85em;
-      font-weight: 700;
+      border-radius: 4px;
+      font-size: 0.8em;
+      font-weight: 600;
       margin-left: 5px;
     }
 
     .suggestion-card .detail {
-      color: #aabbcc;
+      color: #8a8378;
       margin: 8px 0;
-      font-size: 1em;
+      font-size: 0.95em;
     }
 
     .suggestion-card .dino-says {
-      background: #0f3460;
-      border-radius: 12px;
+      background: rgba(201, 168, 76, 0.06);
+      border-radius: 8px;
       padding: 12px 16px;
       margin-top: 15px;
       font-style: italic;
-      color: #8899aa;
-      border-left: 3px solid #e94560;
+      color: #7a7568;
+      border-left: 2px solid #c9a84c;
     }
 
     .action-btns {
@@ -199,35 +209,36 @@
 
     .action-btn:hover { transform: scale(1.05); }
 
-    .btn-go { background: #40916c; color: white; }
-    .btn-nope { background: #e94560; color: white; }
-    .btn-far { background: #f5a623; color: #1a1a2e; }
-    .btn-expensive { background: #533483; color: white; }
-    .btn-another { background: #334455; color: #e0e0e0; }
+    .btn-go { background: #c9a84c; color: #0d0d0d; }
+    .btn-nope { background: #3a2020; color: #c9a84c; border: 1px solid rgba(201, 168, 76, 0.2); }
+    .btn-far { background: rgba(255,255,255,0.08); color: #d4d0c8; }
+    .btn-expensive { background: rgba(255,255,255,0.08); color: #d4d0c8; }
+    .btn-another { background: rgba(255,255,255,0.05); color: #8a8378; }
 
     /* Panels (shared) */
     .panel {
-      background: linear-gradient(135deg, #1e2a3a, #2a3a4a);
-      border-radius: 20px;
+      background: linear-gradient(135deg, #1a1a1a, #222222);
+      border-radius: 12px;
       padding: 25px;
       margin: 20px 0;
-      border: 1px solid #334455;
+      border: 1px solid rgba(201, 168, 76, 0.15);
       display: none;
     }
 
     .panel.active { display: block; animation: slideIn 0.4s ease; }
 
     .panel h2 {
-      font-family: 'Fredoka One', cursive;
-      color: #f5a623;
+      font-family: 'Playfair Display', serif;
+      color: #c9a84c;
       margin-bottom: 15px;
     }
 
     .history-item {
-      background: #0f3460;
-      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 8px;
       padding: 12px 16px;
       margin-bottom: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
     }
 
     .history-item-header {
@@ -236,9 +247,9 @@
       align-items: center;
     }
 
-    .history-item .name { font-weight: 700; color: #e0e0e0; }
-    .history-item .date { color: #8899aa; font-size: 0.9em; }
-    .history-item .meta { font-size: 0.85em; color: #8899aa; margin-top: 4px; }
+    .history-item .name { font-weight: 600; color: #d4d0c8; }
+    .history-item .date { color: #7a7568; font-size: 0.9em; }
+    .history-item .meta { font-size: 0.85em; color: #7a7568; margin-top: 4px; }
 
     .history-item .ratings {
       display: flex;
@@ -254,18 +265,18 @@
       font-weight: 700;
     }
 
-    .rating-taste { background: #e94560; color: white; }
-    .rating-price { background: #40916c; color: white; }
-    .rating-vibe { background: #533483; color: white; }
+    .rating-taste { background: rgba(201, 168, 76, 0.2); color: #c9a84c; }
+    .rating-price { background: rgba(255, 255, 255, 0.08); color: #a0998a; }
+    .rating-vibe { background: rgba(255, 255, 255, 0.08); color: #a0998a; }
 
     .rate-btn {
       margin-top: 8px;
       padding: 6px 14px;
-      background: #f5a623;
-      color: #1a1a2e;
-      border: none;
-      border-radius: 8px;
-      font-weight: 700;
+      background: rgba(201, 168, 76, 0.15);
+      color: #c9a84c;
+      border: 1px solid rgba(201, 168, 76, 0.2);
+      border-radius: 6px;
+      font-weight: 600;
       font-size: 0.85em;
       cursor: pointer;
       transition: all 0.2s;
@@ -277,8 +288,8 @@
     .rating-form {
       margin-top: 10px;
       padding: 12px;
-      background: #1a2a3a;
-      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
     }
 
     .rating-row {
@@ -289,7 +300,7 @@
     }
 
     .rating-row label {
-      color: #8899aa;
+      color: #7a7568;
       font-weight: 600;
       font-size: 0.9em;
     }
@@ -317,33 +328,34 @@
 
     /* Blacklist items */
     .blacklist-item {
-      background: #0f3460;
-      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 8px;
       padding: 12px 16px;
       margin-bottom: 8px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.06);
     }
 
-    .blacklist-item .name { font-weight: 700; color: #e0e0e0; }
+    .blacklist-item .name { font-weight: 600; color: #d4d0c8; }
     .blacklist-item .reason {
       font-size: 0.85em;
-      color: #e94560;
+      color: #8a6040;
       margin-top: 2px;
     }
     .blacklist-item .cuisine-sm {
       font-size: 0.8em;
-      color: #8899aa;
+      color: #7a7568;
     }
 
     .restore-btn {
       padding: 8px 14px;
-      background: #40916c;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-weight: 700;
+      background: rgba(201, 168, 76, 0.15);
+      color: #c9a84c;
+      border: 1px solid rgba(201, 168, 76, 0.2);
+      border-radius: 6px;
+      font-weight: 600;
       font-size: 0.85em;
       cursor: pointer;
       white-space: nowrap;
@@ -361,25 +373,26 @@
 
     .blacklist-tab {
       padding: 6px 14px;
-      border: none;
-      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
       cursor: pointer;
-      font-weight: 700;
+      font-weight: 600;
       font-size: 0.85em;
-      background: #334455;
-      color: #8899aa;
+      background: transparent;
+      color: #7a7568;
       transition: all 0.2s;
     }
 
     .blacklist-tab.active {
-      background: #e94560;
-      color: white;
+      background: rgba(201, 168, 76, 0.15);
+      color: #c9a84c;
+      border-color: rgba(201, 168, 76, 0.3);
     }
 
     .empty-state {
       text-align: center;
       padding: 30px;
-      color: #8899aa;
+      color: #7a7568;
     }
 
     .form-group {
@@ -388,40 +401,43 @@
 
     .form-group label {
       display: block;
-      color: #8899aa;
+      color: #7a7568;
       margin-bottom: 4px;
       font-weight: 600;
       font-size: 0.9em;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
 
     .form-group input, .form-group select, .form-group textarea {
       width: 100%;
       padding: 10px 14px;
-      background: #0f3460;
-      border: 1px solid #334455;
-      border-radius: 10px;
-      color: #e0e0e0;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: #d4d0c8;
       font-size: 1em;
-      font-family: 'Nunito', sans-serif;
+      font-family: 'Inter', sans-serif;
     }
 
     .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
       outline: none;
-      border-color: #e94560;
+      border-color: rgba(201, 168, 76, 0.5);
     }
 
     .submit-btn {
       width: 100%;
       padding: 14px;
-      background: linear-gradient(135deg, #2d6a4f, #40916c);
-      color: white;
+      background: linear-gradient(135deg, #c9a84c, #a8893a);
+      color: #0d0d0d;
       border: none;
-      border-radius: 12px;
-      font-size: 1.1em;
+      border-radius: 8px;
+      font-size: 1em;
       font-weight: 700;
       cursor: pointer;
       margin-top: 10px;
       transition: all 0.3s;
+      letter-spacing: 0.03em;
     }
 
     .submit-btn:hover { transform: translateY(-2px); }
@@ -432,17 +448,17 @@
       bottom: 30px;
       left: 50%;
       transform: translateX(-50%) translateY(100px);
-      background: #40916c;
-      color: white;
+      background: #c9a84c;
+      color: #0d0d0d;
       padding: 14px 24px;
-      border-radius: 12px;
-      font-weight: 700;
+      border-radius: 8px;
+      font-weight: 600;
       transition: transform 0.3s ease;
       z-index: 1000;
     }
 
     .toast.show { transform: translateX(-50%) translateY(0); }
-    .toast.error { background: #e94560; }
+    .toast.error { background: #6b3a3a; color: #d4d0c8; }
 
     /* Name input modal */
     .name-modal {
@@ -458,36 +474,37 @@
     .name-modal.hidden { display: none; }
 
     .name-modal-content {
-      background: linear-gradient(135deg, #1e2a3a, #2a3a4a);
-      border-radius: 20px;
+      background: linear-gradient(135deg, #1a1a1a, #222222);
+      border-radius: 12px;
       padding: 30px;
       text-align: center;
       width: 90%;
       max-width: 400px;
+      border: 1px solid rgba(201, 168, 76, 0.2);
     }
 
     .name-modal-content h2 {
-      font-family: 'Fredoka One', cursive;
-      color: #f5a623;
+      font-family: 'Playfair Display', serif;
+      color: #c9a84c;
       margin-bottom: 10px;
     }
 
     .name-modal-content input {
       width: 100%;
       padding: 12px;
-      background: #0f3460;
-      border: 1px solid #334455;
-      border-radius: 10px;
-      color: #e0e0e0;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: #d4d0c8;
       font-size: 1.1em;
       text-align: center;
       margin: 15px 0;
-      font-family: 'Nunito', sans-serif;
+      font-family: 'Inter', sans-serif;
     }
 
     .name-modal-content input:focus {
       outline: none;
-      border-color: #e94560;
+      border-color: rgba(201, 168, 76, 0.5);
     }
 
     .footer {
@@ -504,7 +521,7 @@
     <div class="name-modal-content">
       <div style="font-size:60px">🦕</div>
       <h2>Hey! Who are you?</h2>
-      <p style="color:#8899aa">So Dino knows who's hungry</p>
+      <p style="color:#7a7568">So Dino knows who's hungry</p>
       <input type="text" id="nameInput" placeholder="Your name..." autofocus>
       <button class="main-btn btn-suggest" onclick="saveName()" style="margin:0">Let's eat!</button>
     </div>
