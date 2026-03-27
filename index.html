@@ -866,13 +866,23 @@
     }
 
     // --- HISTORY WITH RATINGS ---
+    // Ratings are stored as JSON in the existing `rating` text column: {"taste":4,"price":3,"vibe":5}
+    function parseRating(ratingStr) {
+      if (!ratingStr) return null;
+      try {
+        const parsed = JSON.parse(ratingStr);
+        if (parsed.taste || parsed.price || parsed.vibe) return parsed;
+      } catch (e) {}
+      return null;
+    }
+
     async function showHistory() {
       hideAll();
 
       try {
         const visits = await supabase('visits', 'GET', {
           query: 'order=visited_date.desc&limit=20',
-          select: 'id,visited_date,suggested_by,rating,taste_rating,price_rating,vibe_rating,restaurant_id,restaurants(name,cuisine)'
+          select: 'id,visited_date,suggested_by,rating,restaurant_id,restaurants(name,cuisine)'
         });
 
         const list = document.getElementById('historyList');
@@ -888,14 +898,14 @@
             div.className = 'history-item';
             div.id = `visit-${v.id}`;
 
-            const hasRatings = v.taste_rating || v.price_rating || v.vibe_rating;
+            const ratings = parseRating(v.rating);
 
             let ratingsHTML = '';
-            if (hasRatings) {
+            if (ratings) {
               ratingsHTML = `<div class="ratings">
-                ${v.taste_rating ? `<span class="rating-badge rating-taste">Taste ${'★'.repeat(v.taste_rating)}${'☆'.repeat(5-v.taste_rating)}</span>` : ''}
-                ${v.price_rating ? `<span class="rating-badge rating-price">Price ${'★'.repeat(v.price_rating)}${'☆'.repeat(5-v.price_rating)}</span>` : ''}
-                ${v.vibe_rating ? `<span class="rating-badge rating-vibe">Vibe ${'★'.repeat(v.vibe_rating)}${'☆'.repeat(5-v.vibe_rating)}</span>` : ''}
+                ${ratings.taste ? `<span class="rating-badge rating-taste">Taste ${'★'.repeat(ratings.taste)}${'☆'.repeat(5-ratings.taste)}</span>` : ''}
+                ${ratings.price ? `<span class="rating-badge rating-price">Price ${'★'.repeat(ratings.price)}${'☆'.repeat(5-ratings.price)}</span>` : ''}
+                ${ratings.vibe ? `<span class="rating-badge rating-vibe">Vibe ${'★'.repeat(ratings.vibe)}${'☆'.repeat(5-ratings.vibe)}</span>` : ''}
               </div>`;
             } else {
               ratingsHTML = `<button class="rate-btn" onclick="showRatingForm(${v.id})">⭐ Rate this visit</button>`;
@@ -975,14 +985,14 @@
       }
 
       try {
-        const body = {};
-        if (taste) body.taste_rating = parseInt(taste);
-        if (price) body.price_rating = parseInt(price);
-        if (vibe) body.vibe_rating = parseInt(vibe);
+        const ratingObj = {};
+        if (taste) ratingObj.taste = parseInt(taste);
+        if (price) ratingObj.price = parseInt(price);
+        if (vibe) ratingObj.vibe = parseInt(vibe);
 
         await supabase('visits', 'PATCH', {
           query: `id=eq.${visitId}`,
-          body
+          body: { rating: JSON.stringify(ratingObj) }
         });
 
         showToast('Rating saved! 🦕⭐');
