@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dino - Dinner Buddy</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      color: #e0e0e0;
+    }
+
+    .app {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .header {
+      text-align: center;
+      padding: 30px 0 20px;
+    }
+
+    .dino-emoji {
+      font-size: 80px;
+      animation: bounce 2s ease infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .header h1 {
+      font-family: 'Fredoka One', cursive;
+      font-size: 2.5em;
+      background: linear-gradient(135deg, #e94560, #f5a623);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header p {
+      color: #8899aa;
+      margin-top: 5px;
+      font-size: 1.1em;
+    }
+
+    .main-btn {
+      display: block;
+      width: 100%;
+      padding: 20px;
+      font-size: 1.3em;
+      font-family: 'Fredoka One', cursive;
+      border: none;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 15px;
+    }
+
+    .main-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    }
+
+    .btn-suggest {
+      background: linear-gradient(135deg, #e94560, #c23152);
+      color: white;
+    }
+
+    .btn-history {
+      background: linear-gradient(135deg, #533483, #0f3460);
+      color: white;
+    }
+
+    .btn-add {
+      background: linear-gradient(135deg, #2d6a4f, #40916c);
+      color: white;
+    }
+
+    .secondary-btns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .sec-btn {
+      padding: 14px;
+      font-size: 0.95em;
+      font-weight: 700;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: white;
+    }
+
+    .sec-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+
+    .btn-quick { background: linear-gradient(135deg, #f5a623, #e08a1e); }
+    .btn-friday { background: linear-gradient(135deg, #e94560, #c23152); }
+    .btn-cheap { background: linear-gradient(135deg, #2d6a4f, #40916c); }
+    .btn-new { background: linear-gradient(135deg, #533483, #7b2cbf); }
+
+    /* Suggestion card */
+    .suggestion-card {
+      background: linear-gradient(135deg, #1e2a3a, #2a3a4a);
+      border-radius: 20px;
+      padding: 25px;
+      margin: 20px 0;
+      border: 1px solid #334455;
+      display: none;
+    }
+
+    .suggestion-card.active { display: block; animation: slideIn 0.4s ease; }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .suggestion-card h2 {
+      font-family: 'Fredoka One', cursive;
+      font-size: 1.6em;
+      color: #f5a623;
+      margin-bottom: 5px;
+    }
+
+    .suggestion-card .cuisine-tag {
+      display: inline-block;
+      background: #e94560;
+      color: white;
+      padding: 3px 12px;
+      border-radius: 20px;
+      font-size: 0.85em;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .suggestion-card .price-tag {
+      display: inline-block;
+      background: #40916c;
+      color: white;
+      padding: 3px 12px;
+      border-radius: 20px;
+      font-size: 0.85em;
+      font-weight: 700;
+      margin-left: 5px;
+    }
+
+    .suggestion-card .detail {
+      color: #aabbcc;
+      margin: 8px 0;
+      font-size: 1em;
+    }
+
+    .suggestion-card .dino-says {
+      background: #0f3460;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-top: 15px;
+      font-style: italic;
+      color: #8899aa;
+      border-left: 3px solid #e94560;
+    }
+
+    .action-btns {
+      display: flex;
+      gap: 8px;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
+
+    .action-btn {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.9em;
+      transition: all 0.2s;
+    }
+
+    .action-btn:hover { transform: scale(1.05); }
+
+    .btn-go { background: #40916c; color: white; }
+    .btn-nope { background: #e94560; color: white; }
+    .btn-far { background: #f5a623; color: #1a1a2e; }
+    .btn-expensive { background: #533483; color: white; }
+    .btn-another { background: #334455; color: #e0e0e0; }
+
+    /* History panel */
+    .history-panel {
+      background: linear-gradient(135deg, #1e2a3a, #2a3a4a);
+      border-radius: 20px;
+      padding: 25px;
+      margin: 20px 0;
+      border: 1px solid #334455;
+      display: none;
+    }
+
+    .history-panel.active { display: block; animation: slideIn 0.4s ease; }
+
+    .history-panel h2 {
+      font-family: 'Fredoka One', cursive;
+      color: #f5a623;
+      margin-bottom: 15px;
+    }
+
+    .history-item {
+      background: #0f3460;
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .history-item .name { font-weight: 700; color: #e0e0e0; }
+    .history-item .date { color: #8899aa; font-size: 0.9em; }
+    .history-item .rating { font-size: 0.85em; color: #f5a623; }
+
+    .empty-state {
+      text-align: center;
+      padding: 30px;
+      color: #8899aa;
+    }
+
+    /* Add restaurant panel */
+    .add-panel {
+      background: linear-gradient(135deg, #1e2a3a, #2a3a4a);
+      border-radius: 20px;
+      padding: 25px;
+      margin: 20px 0;
+      border: 1px solid #334455;
+      display: none;
+    }
+
+    .add-panel.active { display: block; animation: slideIn 0.4s ease; }
+
+    .add-panel h2 {
+      font-family: 'Fredoka One', cursive;
+      color: #f5a623;
+      margin-bottom: 15px;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group label {
+      display: block;
+      color: #8899aa;
+      margin-bottom: 4px;
+      font-weight: 600;
+      font-size: 0.9em;
+    }
+
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      padding: 10px 14px;
+      background: #0f3460;
+      border: 1px solid #334455;
+      border-radius: 10px;
+      color: #e0e0e0;
+      font-size: 1em;
+      font-family: 'Nunito', sans-serif;
+    }
+
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      outline: none;
+      border-color: #e94560;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #2d6a4f, #40916c);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1em;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: all 0.3s;
+    }
+
+    .submit-btn:hover { transform: translateY(-2px); }
+
+    /* Toast notification */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #40916c;
+      color: white;
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-weight: 700;
+      transition: transform 0.3s ease;
+      z-index: 1000;
+    }
+
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.error { background: #e94560; }
+
+    /* Name input modal */
+    .name-modal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+
+    .name-modal.hidden { display: none; }
+
+    .name-modal-content {
+      background: linear-gradient(135deg, #1e2a3a, #2a3a4a);
+      border-radius: 20px;
+      padding: 30px;
+      text-align: center;
+      width: 90%;
+      max-width: 400px;
+    }
+
+    .name-modal-content h2 {
+      font-family: 'Fredoka One', cursive;
+      color: #f5a623;
+      margin-bottom: 10px;
+    }
+
+    .name-modal-content input {
+      width: 100%;
+      padding: 12px;
+      background: #0f3460;
+      border: 1px solid #334455;
+      border-radius: 10px;
+      color: #e0e0e0;
+      font-size: 1.1em;
+      text-align: center;
+      margin: 15px 0;
+      font-family: 'Nunito', sans-serif;
+    }
+
+    .name-modal-content input:focus {
+      outline: none;
+      border-color: #e94560;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 20px;
+      color: #445566;
+      font-size: 0.85em;
+    }
+  </style>
+</head>
+<body>
+  <!-- Name Modal -->
+  <div class="name-modal" id="nameModal">
+    <div class="name-modal-content">
+      <div style="font-size:60px">🦕</div>
+      <h2>Hey! Who are you?</h2>
+      <p style="color:#8899aa">So Dino knows who's hungry</p>
+      <input type="text" id="nameInput" placeholder="Your name..." autofocus>
+      <button class="main-btn btn-suggest" onclick="saveName()" style="margin:0">Let's eat!</button>
+    </div>
+  </div>
+
+  <div class="app">
+    <div class="header">
+      <div class="dino-emoji">🦕</div>
+      <h1>DINO</h1>
+      <p>Your AV Stockholm dinner buddy</p>
+      <p style="font-size:0.85em; color:#556677" id="userGreeting"></p>
+    </div>
+
+    <button class="main-btn btn-suggest" onclick="suggestDinner()">🍽️ Suggest dinner!</button>
+
+    <div class="secondary-btns">
+      <button class="sec-btn btn-quick" onclick="suggestDinner('quick')">⚡ Quick bite</button>
+      <button class="sec-btn btn-friday" onclick="suggestDinner('friday')">🥂 Friday treat</button>
+      <button class="sec-btn btn-cheap" onclick="suggestDinner('budget')">💰 Cheap option</button>
+      <button class="sec-btn btn-new" onclick="suggestDinner('new')">✨ Something new</button>
+    </div>
+
+    <button class="main-btn btn-history" onclick="showHistory()">📜 Where have we been?</button>
+    <button class="main-btn btn-add" onclick="showAddPanel()">➕ Add a restaurant</button>
+
+    <!-- Suggestion Card -->
+    <div class="suggestion-card" id="suggestionCard">
+      <h2 id="sugName"></h2>
+      <span class="cuisine-tag" id="sugCuisine"></span>
+      <span class="price-tag" id="sugPrice"></span>
+      <div class="detail" id="sugAddress"></div>
+      <div class="detail" id="sugWalk"></div>
+      <div class="dino-says" id="sugNotes"></div>
+      <div class="action-btns">
+        <button class="action-btn btn-go" onclick="confirmVisit()">✅ Let's go!</button>
+        <button class="action-btn btn-another" onclick="suggestDinner()">🔄 Another one</button>
+        <button class="action-btn btn-nope" onclick="blacklist('Blacklisted - Bad Food')">👎 Bad food</button>
+        <button class="action-btn btn-far" onclick="blacklist('Blacklisted - Too Far')">🚶 Too far</button>
+        <button class="action-btn btn-expensive" onclick="blacklist('Blacklisted - Too Expensive')">💸 Too pricey</button>
+      </div>
+    </div>
+
+    <!-- History Panel -->
+    <div class="history-panel" id="historyPanel">
+      <h2>📜 Recent visits</h2>
+      <div id="historyList"></div>
+    </div>
+
+    <!-- Add Restaurant Panel -->
+    <div class="add-panel" id="addPanel">
+      <h2>➕ Add a restaurant</h2>
+      <div class="form-group">
+        <label>Restaurant name</label>
+        <input type="text" id="addName" placeholder="e.g. Pasta Palace">
+      </div>
+      <div class="form-group">
+        <label>Cuisine</label>
+        <input type="text" id="addCuisine" placeholder="e.g. Italian, Thai, Swedish">
+      </div>
+      <div class="form-group">
+        <label>Address</label>
+        <input type="text" id="addAddress" placeholder="e.g. Sveavägen 42">
+      </div>
+      <div class="form-group">
+        <label>Walking minutes from office</label>
+        <input type="number" id="addWalking" placeholder="e.g. 5" min="0" max="30">
+      </div>
+      <div class="form-group">
+        <label>Price range</label>
+        <select id="addPrice">
+          <option value="Budget">Budget</option>
+          <option value="Mid" selected>Mid</option>
+          <option value="Upscale">Upscale</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea id="addNotes" rows="2" placeholder="Any comments..."></textarea>
+      </div>
+      <button class="submit-btn" onclick="addRestaurant()">Add to Dino's list 🦕</button>
+    </div>
+
+    <div class="footer">
+      🦕 Dino — AV Stockholm Dinner Buddy<br>
+      Office: Kungsgatan 2, Stockholm
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // Supabase config
+    const SUPABASE_URL = 'https://qqznhnekffvwtuyqvatz.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxem5obmVrZmZ2d3R1eXF2YXR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1OTM2NTgsImV4cCI6MjA5MDE2OTY1OH0.oqpVcuiPNpyYeKAU3BP8A9PfSnJTEkx3WuMw4YIcOLU';
+
+    let currentSuggestion = null;
+    let userName = '';
+    let lastMode = '';
+
+    // Check if user has a name stored
+    function init() {
+      userName = getCookie('dino_user');
+      if (!userName) {
+        document.getElementById('nameModal').classList.remove('hidden');
+      } else {
+        document.getElementById('nameModal').classList.add('hidden');
+        document.getElementById('userGreeting').textContent = `Hey ${userName}! Hungry? 🦕`;
+      }
+      document.getElementById('nameInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') saveName();
+      });
+    }
+
+    function saveName() {
+      const name = document.getElementById('nameInput').value.trim();
+      if (!name) return;
+      userName = name;
+      setCookie('dino_user', name, 365);
+      document.getElementById('nameModal').classList.add('hidden');
+      document.getElementById('userGreeting').textContent = `Hey ${userName}! Hungry? 🦕`;
+    }
+
+    function setCookie(name, value, days) {
+      const d = new Date();
+      d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+      document.cookie = `${name}=${value};expires=${d.toUTCString()};path=/`;
+    }
+
+    function getCookie(name) {
+      const v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+      return v ? v[2] : null;
+    }
+
+    // Supabase API helper
+    async function supabase(table, method, options = {}) {
+      let url = `${SUPABASE_URL}/rest/v1/${table}`;
+      const headers = {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': method === 'POST' ? 'return=representation' : ''
+      };
+
+      if (options.query) url += `?${options.query}`;
+      if (options.select) url += `${url.includes('?') ? '&' : '?'}select=${options.select}`;
+
+      const config = { method, headers };
+      if (options.body) config.body = JSON.stringify(options.body);
+
+      const res = await fetch(url, config);
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      const text = await res.text();
+      return text ? JSON.parse(text) : null;
+    }
+
+    // Dino's personality - random quips
+    const dinoQuips = [
+      "Dino thinks this one's a winner! 🦕",
+      "Rawr! This place is close and tasty!",
+      "Dino's tummy says yes to this one!",
+      "Trust Dino — this is the spot tonight!",
+      "Dino went here last week... wait, no, that was a dream.",
+      "If Dino had hands, Dino would book a table right now!",
+      "This one smells good! (Dino has a great nose)",
+      "Dino approves! 🦕✨",
+      "Ancient Dino wisdom says: go here!",
+      "Dino's pick of the day!"
+    ];
+
+    async function suggestDinner(mode = '') {
+      lastMode = mode;
+      hideAll();
+
+      try {
+        // Get restaurants that aren't blacklisted
+        let query = 'status=eq.Available&order=name';
+        const restaurants = await supabase('restaurants', 'GET', { query });
+
+        if (!restaurants || restaurants.length === 0) {
+          showToast('No restaurants available! Add some first.', true);
+          return;
+        }
+
+        // Get visits from last 30 days
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const dateStr = thirtyDaysAgo.toISOString().split('T')[0];
+
+        const recentVisits = await supabase('visits', 'GET', {
+          query: `visited_date=gte.${dateStr}&select=restaurant_id`
+        });
+
+        const recentIds = new Set((recentVisits || []).map(v => v.restaurant_id));
+
+        // Filter out recently visited
+        let available = restaurants.filter(r => !recentIds.has(r.id));
+
+        // Apply mode filters
+        if (mode === 'budget') {
+          available = available.filter(r => r.price_range === 'Budget');
+        } else if (mode === 'friday') {
+          available = available.filter(r => r.price_range === 'Upscale' || r.price_range === 'Mid');
+        } else if (mode === 'quick') {
+          available = available.filter(r => r.walking_minutes <= 4);
+        } else if (mode === 'new') {
+          // Get ALL visits ever
+          const allVisits = await supabase('visits', 'GET', { query: 'select=restaurant_id' });
+          const allVisitedIds = new Set((allVisits || []).map(v => v.restaurant_id));
+          available = available.filter(r => !allVisitedIds.has(r.id));
+        }
+
+        if (available.length === 0) {
+          showToast("Dino's out of ideas! You've been everywhere recently 🦕", true);
+          return;
+        }
+
+        // Random pick
+        const pick = available[Math.floor(Math.random() * available.length)];
+        currentSuggestion = pick;
+
+        // Show the card
+        document.getElementById('sugName').textContent = pick.name;
+        document.getElementById('sugCuisine').textContent = pick.cuisine || 'Mixed';
+        document.getElementById('sugPrice').textContent = pick.price_range || 'Mid';
+        document.getElementById('sugAddress').textContent = `📍 ${pick.address || 'Address unknown'}`;
+        document.getElementById('sugWalk').textContent = `🚶 ${pick.walking_minutes || '?'} min walk from office`;
+        document.getElementById('sugNotes').textContent = `🦕 "${pick.notes || dinoQuips[Math.floor(Math.random() * dinoQuips.length)]}"`;
+
+        document.getElementById('suggestionCard').classList.add('active');
+
+      } catch (err) {
+        console.error(err);
+        showToast('Dino tripped! Something went wrong.', true);
+      }
+    }
+
+    async function confirmVisit() {
+      if (!currentSuggestion) return;
+
+      try {
+        await supabase('visits', 'POST', {
+          body: {
+            restaurant_id: currentSuggestion.id,
+            visited_date: new Date().toISOString().split('T')[0],
+            suggested_by: userName || 'Anonymous',
+            rating: 'Good'
+          }
+        });
+
+        showToast(`Booked! Enjoy ${currentSuggestion.name}! 🦕🍽️`);
+        hideAll();
+      } catch (err) {
+        console.error(err);
+        showToast('Could not log the visit!', true);
+      }
+    }
+
+    async function blacklist(reason) {
+      if (!currentSuggestion) return;
+
+      try {
+        await supabase('restaurants', 'PATCH', {
+          query: `id=eq.${currentSuggestion.id}`,
+          body: { status: reason }
+        });
+
+        const reasonText = reason.replace('Blacklisted - ', '').toLowerCase();
+        showToast(`Got it — ${currentSuggestion.name} is off the list (${reasonText}) 🦕`);
+
+        // Suggest another one
+        suggestDinner(lastMode);
+      } catch (err) {
+        console.error(err);
+        showToast('Could not update!', true);
+      }
+    }
+
+    async function showHistory() {
+      hideAll();
+
+      try {
+        const visits = await supabase('visits', 'GET', {
+          query: 'order=visited_date.desc&limit=20',
+          select: 'id,visited_date,suggested_by,rating,restaurant_id,restaurants(name,cuisine)'
+        });
+
+        const list = document.getElementById('historyList');
+        list.innerHTML = '';
+
+        if (!visits || visits.length === 0) {
+          list.innerHTML = '<div class="empty-state">🦕 No visits yet! Go eat somewhere!</div>';
+        } else {
+          visits.forEach(v => {
+            const name = v.restaurants ? v.restaurants.name : `Restaurant #${v.restaurant_id}`;
+            const date = new Date(v.visited_date).toLocaleDateString('sv-SE');
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            div.innerHTML = `
+              <div>
+                <div class="name">${name}</div>
+                <div class="rating">${v.rating || ''} · by ${v.suggested_by || 'unknown'}</div>
+              </div>
+              <div class="date">${date}</div>
+            `;
+            list.appendChild(div);
+          });
+        }
+
+        document.getElementById('historyPanel').classList.add('active');
+      } catch (err) {
+        console.error(err);
+        showToast('Could not load history!', true);
+      }
+    }
+
+    function showAddPanel() {
+      hideAll();
+      document.getElementById('addPanel').classList.add('active');
+    }
+
+    async function addRestaurant() {
+      const name = document.getElementById('addName').value.trim();
+      const cuisine = document.getElementById('addCuisine').value.trim();
+      const address = document.getElementById('addAddress').value.trim();
+      const walking = parseInt(document.getElementById('addWalking').value) || 0;
+      const price = document.getElementById('addPrice').value;
+      const notes = document.getElementById('addNotes').value.trim();
+
+      if (!name) {
+        showToast('Give the restaurant a name!', true);
+        return;
+      }
+
+      try {
+        await supabase('restaurants', 'POST', {
+          body: { name, cuisine, address, walking_minutes: walking, price_range: price, notes }
+        });
+
+        showToast(`Added ${name} to Dino's list! 🦕`);
+        hideAll();
+
+        // Clear form
+        document.getElementById('addName').value = '';
+        document.getElementById('addCuisine').value = '';
+        document.getElementById('addAddress').value = '';
+        document.getElementById('addWalking').value = '';
+        document.getElementById('addNotes').value = '';
+      } catch (err) {
+        console.error(err);
+        showToast('Could not add restaurant!', true);
+      }
+    }
+
+    function hideAll() {
+      document.getElementById('suggestionCard').classList.remove('active');
+      document.getElementById('historyPanel').classList.remove('active');
+      document.getElementById('addPanel').classList.remove('active');
+    }
+
+    function showToast(msg, isError = false) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.className = `toast show ${isError ? 'error' : ''}`;
+      setTimeout(() => toast.className = 'toast', 3000);
+    }
+
+    // Initialize
+    init();
+  </script>
+</body>
+</html>
