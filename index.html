@@ -2,1105 +2,1862 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0d0d0d">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json">
   <title>Dino - Dinner Buddy</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --gold: #c9a84c;
+      --gold-light: #e8d5a3;
+      --gold-dim: rgba(201,168,76,0.15);
+      --gold-border: rgba(201,168,76,0.2);
+      --bg: #0d0d0d;
+      --bg-card: #161616;
+      --bg-elevated: #1e1e1e;
+      --bg-input: rgba(0,0,0,0.3);
+      --text: #d4d0c8;
+      --text-dim: #7a7568;
+      --text-muted: #555048;
+      --border: rgba(255,255,255,0.06);
+      --red: #8a4040;
+      --red-dim: rgba(138,64,64,0.3);
+      --green: #4a8a5a;
+      --green-dim: rgba(74,138,90,0.2);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
     body {
       font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, #0d0d0d 0%, #1a1a1a 50%, #141414 100%);
+      background: var(--bg);
       min-height: 100vh;
-      color: #d4d0c8;
+      min-height: 100dvh;
+      color: var(--text);
+      overscroll-behavior: none;
+      padding-bottom: calc(70px + var(--safe-bottom));
     }
 
-    .app {
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 20px;
-    }
+    /* ---- Typography ---- */
+    h1, h2, h3 { font-family: 'Playfair Display', serif; color: var(--gold); }
 
-    .header {
-      text-align: center;
-      padding: 30px 0 20px;
-    }
+    /* ---- Layout ---- */
+    .app { max-width: 600px; margin: 0 auto; padding: 16px; }
 
-    .dino-emoji {
-      font-size: 60px;
-      animation: float 3s ease-in-out infinite;
+    /* ---- Bottom Nav ---- */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: #111; border-top: 1px solid var(--border);
+      display: flex; justify-content: space-around; align-items: center;
+      padding: 8px 0 calc(8px + var(--safe-bottom));
+      z-index: 100; backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      background: rgba(17,17,17,0.92);
     }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-6px); }
+    .nav-item {
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      font-size: 0.7em; color: var(--text-dim); cursor: pointer;
+      padding: 4px 12px; border: none; background: none;
+      transition: color 0.2s;
     }
+    .nav-item.active { color: var(--gold); }
+    .nav-item span.icon { font-size: 1.7em; }
 
+    /* ---- Views ---- */
+    .view { display: none; animation: fadeIn 0.3s ease; }
+    .view.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ---- Header ---- */
+    .header { text-align: center; padding: 20px 0 16px; }
+    .dino-emoji { font-size: 50px; animation: float 3s ease-in-out infinite; }
+    @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
     .header h1 {
-      font-family: 'Playfair Display', serif;
-      font-size: 2.5em;
-      background: linear-gradient(135deg, #c9a84c, #e8d5a3);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      font-size: 2.2em;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
       letter-spacing: 0.02em;
     }
+    .header .tagline {
+      color: var(--text-dim); font-size: 0.85em; letter-spacing: 0.05em;
+      text-transform: uppercase; font-weight: 500; margin-top: 4px;
+    }
+    .header .greeting { font-size: 0.85em; color: var(--text-muted); margin-top: 6px; }
 
-    .header p {
-      color: #7a7568;
-      margin-top: 5px;
-      font-size: 1em;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      font-weight: 500;
+    /* ---- Mood Chips ---- */
+    .mood-chips {
+      display: flex; gap: 8px; overflow-x: auto; padding: 12px 0;
+      scrollbar-width: none; -ms-overflow-style: none;
+    }
+    .mood-chips::-webkit-scrollbar { display: none; }
+    .mood-chip {
+      flex-shrink: 0; padding: 10px 16px; border-radius: 24px;
+      background: var(--bg-elevated); border: 1px solid var(--border);
+      color: var(--text-dim); font-size: 0.85em; font-weight: 600;
+      cursor: pointer; transition: all 0.25s; white-space: nowrap;
+    }
+    .mood-chip:active { transform: scale(0.95); }
+    .mood-chip.active {
+      background: var(--gold-dim); color: var(--gold);
+      border-color: var(--gold-border);
     }
 
-    .main-btn {
-      display: block;
-      width: 100%;
-      padding: 18px;
-      font-size: 1.1em;
-      font-family: 'Playfair Display', serif;
-      font-weight: 600;
-      border: 1px solid rgba(201, 168, 76, 0.2);
-      border-radius: 10px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      margin-bottom: 12px;
-      letter-spacing: 0.03em;
+    /* ---- Buttons ---- */
+    .btn {
+      display: block; width: 100%; padding: 16px; font-size: 1em;
+      font-weight: 600; border: 1px solid var(--border); border-radius: 12px;
+      cursor: pointer; transition: all 0.25s; text-align: center;
+      font-family: inherit; position: relative; overflow: hidden;
     }
-
-    .main-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
-      border-color: rgba(201, 168, 76, 0.4);
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.5; pointer-events: none; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--gold), #a8893a);
+      color: var(--bg); border-color: var(--gold); font-weight: 700;
     }
+    .btn-secondary { background: var(--bg-elevated); color: var(--text); }
+    .btn-ghost { background: transparent; color: var(--text-dim); border-color: var(--border); }
+    .btn-danger { background: var(--red-dim); color: #daa; border-color: rgba(138,64,64,0.3); }
+    .btn-sm { padding: 10px 16px; font-size: 0.85em; width: auto; display: inline-block; }
+    .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .btn + .btn { margin-top: 8px; }
+    .btn-grid .btn + .btn { margin-top: 0; }
 
-    .btn-suggest {
-      background: linear-gradient(135deg, #c9a84c, #a8893a);
-      color: #0d0d0d;
+    /* ---- Cards ---- */
+    .card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 18px; margin-bottom: 10px;
+      transition: all 0.25s;
     }
-
-    .btn-history {
-      background: linear-gradient(135deg, #1e1e1e, #2a2a2a);
-      color: #d4d0c8;
+    .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+    .card-title { font-family: 'Playfair Display', serif; font-size: 1.15em; color: var(--gold); }
+    .card-meta { font-size: 0.8em; color: var(--text-dim); margin-top: 3px; }
+    .card-tags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+    .tag {
+      padding: 3px 10px; border-radius: 4px; font-size: 0.75em;
+      font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase;
     }
+    .tag-gold { background: var(--gold-dim); color: var(--gold); }
+    .tag-muted { background: rgba(255,255,255,0.05); color: var(--text-dim); }
+    .tag-green { background: var(--green-dim); color: #8dca8d; }
+    .tag-red { background: var(--red-dim); color: #daa; }
 
-    .btn-add {
-      background: linear-gradient(135deg, #1e1e1e, #2a2a2a);
-      color: #d4d0c8;
+    /* ---- Skeleton ---- */
+    .skeleton {
+      background: linear-gradient(90deg, var(--bg-elevated) 25%, #252525 50%, var(--bg-elevated) 75%);
+      background-size: 200% 100%; animation: shimmer 1.5s infinite;
+      border-radius: 8px; min-height: 20px;
     }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .skeleton-card { height: 80px; margin-bottom: 10px; border-radius: 14px; }
+    .skeleton-text { height: 14px; margin-bottom: 8px; width: 70%; }
+    .skeleton-text.short { width: 40%; }
 
-    .btn-blacklist {
-      background: linear-gradient(135deg, #1e1e1e, #2a2a2a);
-      color: #d4d0c8;
-    }
-
-    .secondary-btns {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 15px;
-    }
-
-    .sec-btn {
-      padding: 14px;
-      font-size: 0.9em;
-      font-weight: 600;
-      border: 1px solid rgba(201, 168, 76, 0.15);
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      color: #d4d0c8;
-    }
-
-    .sec-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      border-color: rgba(201, 168, 76, 0.3);
-    }
-
-    .btn-quick { background: linear-gradient(135deg, #1e1e1e, #282828); }
-    .btn-friday { background: linear-gradient(135deg, #2a1f1f, #332020); }
-    .btn-cheap { background: linear-gradient(135deg, #1a2420, #1e2e26); }
-    .btn-new { background: linear-gradient(135deg, #1e1a28, #28203a); }
-
-    /* Suggestion card */
+    /* ---- Suggestion Card (Enhanced) ---- */
     .suggestion-card {
-      background: linear-gradient(135deg, #1a1a1a, #222222);
-      border-radius: 12px;
-      padding: 25px;
-      margin: 20px 0;
-      border: 1px solid rgba(201, 168, 76, 0.15);
-      display: none;
+      background: var(--bg-card); border: 1px solid var(--gold-border);
+      border-radius: 16px; padding: 22px; margin: 16px 0;
+      display: none; position: relative;
     }
-
-    .suggestion-card.active { display: block; animation: slideIn 0.4s ease; }
-
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .suggestion-card h2 {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.5em;
-      color: #c9a84c;
-      margin-bottom: 5px;
-    }
-
-    .suggestion-card .cuisine-tag {
-      display: inline-block;
-      background: rgba(201, 168, 76, 0.15);
-      color: #c9a84c;
-      padding: 3px 12px;
-      border-radius: 4px;
-      font-size: 0.8em;
-      font-weight: 600;
-      margin-bottom: 12px;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-    }
-
-    .suggestion-card .price-tag {
-      display: inline-block;
-      background: rgba(255, 255, 255, 0.08);
-      color: #a0998a;
-      padding: 3px 12px;
-      border-radius: 4px;
-      font-size: 0.8em;
-      font-weight: 600;
-      margin-left: 5px;
-    }
-
-    .suggestion-card .detail {
-      color: #8a8378;
-      margin: 8px 0;
-      font-size: 0.95em;
-    }
-
+    .suggestion-card.active { display: block; animation: cardIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    @keyframes cardIn { from { opacity: 0; transform: scale(0.92) translateY(16px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+    .suggestion-card h2 { font-size: 1.4em; margin-bottom: 6px; }
+    .suggestion-card .detail { color: var(--text-dim); margin: 6px 0; font-size: 0.9em; }
     .suggestion-card .dino-says {
-      background: rgba(201, 168, 76, 0.06);
-      border-radius: 8px;
-      padding: 12px 16px;
-      margin-top: 15px;
-      font-style: italic;
-      color: #7a7568;
-      border-left: 2px solid #c9a84c;
+      background: rgba(201,168,76,0.06); border-radius: 10px;
+      padding: 12px 14px; margin-top: 14px; font-style: italic;
+      color: var(--text-dim); border-left: 2px solid var(--gold); font-size: 0.9em;
+    }
+    .suggestion-actions { display: flex; gap: 6px; margin-top: 14px; flex-wrap: wrap; }
+    .suggestion-actions .btn { width: auto; flex: 1; min-width: 0; }
+
+    /* ---- Swipe Deck ---- */
+    .swipe-container {
+      position: relative; height: 320px; margin: 16px 0;
+      display: none; perspective: 1000px;
+    }
+    .swipe-container.active { display: block; }
+    .swipe-card {
+      position: absolute; top: 0; left: 0; right: 0;
+      background: var(--bg-card); border: 1px solid var(--gold-border);
+      border-radius: 16px; padding: 24px; height: 300px;
+      cursor: grab; user-select: none; touch-action: none;
+      transition: box-shadow 0.2s;
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    .swipe-card:active { cursor: grabbing; }
+    .swipe-card .swipe-indicator {
+      position: absolute; top: 20px; padding: 8px 20px;
+      border-radius: 8px; font-weight: 700; font-size: 1.1em;
+      opacity: 0; transition: opacity 0.15s; letter-spacing: 0.05em;
+    }
+    .swipe-card .swipe-yes { right: 20px; background: var(--green-dim); color: #8dca8d; border: 2px solid #4a8a5a; }
+    .swipe-card .swipe-no { left: 20px; background: var(--red-dim); color: #daa; border: 2px solid #8a4040; }
+    .swipe-card h2 { font-size: 1.5em; text-align: center; }
+    .swipe-card .card-tags { justify-content: center; margin: 10px 0; }
+    .swipe-card .detail { text-align: center; color: var(--text-dim); font-size: 0.9em; margin: 4px 0; }
+    .swipe-hint { text-align: center; color: var(--text-muted); font-size: 0.8em; margin-top: 8px; }
+    .swipe-progress { display: flex; gap: 4px; justify-content: center; margin: 12px 0; }
+    .swipe-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--border); transition: all 0.3s;
+    }
+    .swipe-dot.done { background: var(--gold); }
+    .swipe-dot.current { background: var(--gold); transform: scale(1.3); }
+
+    /* ---- Search & Filters ---- */
+    .search-bar {
+      position: relative; margin-bottom: 12px;
+    }
+    .search-bar input {
+      width: 100%; padding: 12px 14px 12px 38px;
+      background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text); font-size: 0.95em;
+      font-family: inherit;
+    }
+    .search-bar input:focus { outline: none; border-color: var(--gold-border); }
+    .search-bar .search-icon {
+      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+      color: var(--text-muted); font-size: 0.9em;
+    }
+    .filter-row { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px; }
+    .filter-chip {
+      flex-shrink: 0; padding: 6px 12px; border-radius: 20px;
+      background: var(--bg-elevated); border: 1px solid var(--border);
+      color: var(--text-dim); font-size: 0.8em; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .filter-chip.active { background: var(--gold-dim); color: var(--gold); border-color: var(--gold-border); }
+
+    /* ---- Stats ---- */
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+    .stat-box {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px; text-align: center;
+    }
+    .stat-number {
+      font-family: 'Playfair Display', serif; font-size: 2em;
+      color: var(--gold); line-height: 1;
+    }
+    .stat-label { font-size: 0.75em; color: var(--text-dim); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .chart-bar-container { margin: 16px 0; }
+    .chart-bar-row {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+    }
+    .chart-bar-label { font-size: 0.8em; color: var(--text-dim); width: 80px; text-align: right; flex-shrink: 0; }
+    .chart-bar-track { flex: 1; height: 24px; background: var(--bg-elevated); border-radius: 6px; overflow: hidden; }
+    .chart-bar-fill {
+      height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-light));
+      border-radius: 6px; transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+      display: flex; align-items: center; justify-content: flex-end; padding-right: 8px;
+      font-size: 0.7em; font-weight: 700; color: var(--bg); min-width: fit-content;
     }
 
-    .action-btns {
-      display: flex;
-      gap: 8px;
-      margin-top: 15px;
-      flex-wrap: wrap;
+    /* ---- Achievements ---- */
+    .achievement {
+      display: flex; align-items: center; gap: 14px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px; margin-bottom: 8px;
+    }
+    .achievement.unlocked { border-color: var(--gold-border); }
+    .achievement .badge {
+      font-size: 2em; width: 48px; height: 48px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 12px; background: var(--bg-elevated); flex-shrink: 0;
+    }
+    .achievement.unlocked .badge { background: var(--gold-dim); }
+    .achievement.locked { opacity: 0.45; }
+    .achievement .info { flex: 1; }
+    .achievement .info h3 { font-size: 0.95em; color: var(--text); }
+    .achievement.unlocked .info h3 { color: var(--gold); }
+    .achievement .info p { font-size: 0.8em; color: var(--text-dim); margin-top: 2px; }
+    .progress-bar {
+      height: 4px; background: var(--bg-elevated); border-radius: 2px;
+      margin-top: 6px; overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; background: var(--gold); border-radius: 2px;
+      transition: width 0.6s ease;
     }
 
-    .action-btn {
-      padding: 10px 18px;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      font-weight: 700;
-      font-size: 0.9em;
-      transition: all 0.2s;
+    /* ---- Voting ---- */
+    .vote-setup { text-align: center; padding: 20px 0; }
+    .vote-code {
+      font-family: 'Playfair Display', serif; font-size: 2.5em;
+      color: var(--gold); letter-spacing: 0.15em; margin: 16px 0;
     }
-
-    .action-btn:hover { transform: scale(1.05); }
-
-    .btn-go { background: #c9a84c; color: #0d0d0d; }
-    .btn-nope { background: #3a2020; color: #c9a84c; border: 1px solid rgba(201, 168, 76, 0.2); }
-    .btn-far { background: rgba(255,255,255,0.08); color: #d4d0c8; }
-    .btn-expensive { background: rgba(255,255,255,0.08); color: #d4d0c8; }
-    .btn-another { background: rgba(255,255,255,0.05); color: #8a8378; }
-
-    /* Panels (shared) */
-    .panel {
-      background: linear-gradient(135deg, #1a1a1a, #222222);
-      border-radius: 12px;
-      padding: 25px;
-      margin: 20px 0;
-      border: 1px solid rgba(201, 168, 76, 0.15);
-      display: none;
+    .vote-join-input {
+      width: 100%; padding: 14px; background: var(--bg-input);
+      border: 1px solid var(--border); border-radius: 10px;
+      color: var(--text); font-size: 1.2em; text-align: center;
+      font-family: inherit; letter-spacing: 0.1em;
     }
-
-    .panel.active { display: block; animation: slideIn 0.4s ease; }
-
-    .panel h2 {
-      font-family: 'Playfair Display', serif;
-      color: #c9a84c;
-      margin-bottom: 15px;
+    .vote-join-input:focus { outline: none; border-color: var(--gold-border); }
+    .voters-list {
+      display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+      margin: 12px 0;
     }
-
-    .history-item {
-      background: rgba(255, 255, 255, 0.04);
-      border-radius: 8px;
-      padding: 12px 16px;
-      margin-bottom: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.06);
+    .voter-badge {
+      padding: 4px 12px; border-radius: 20px; font-size: 0.8em;
+      font-weight: 600; background: var(--gold-dim); color: var(--gold);
     }
-
-    .history-item-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    .vote-option {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 16px; margin-bottom: 10px;
+      display: flex; justify-content: space-between; align-items: center;
+      transition: all 0.25s; cursor: pointer;
     }
-
-    .history-item .name { font-weight: 600; color: #d4d0c8; }
-    .history-item .date { color: #7a7568; font-size: 0.9em; }
-    .history-item .meta { font-size: 0.85em; color: #7a7568; margin-top: 4px; }
-
-    .history-item .ratings {
-      display: flex;
-      gap: 12px;
-      margin-top: 8px;
-      flex-wrap: wrap;
+    .vote-option:active { transform: scale(0.98); }
+    .vote-option.voted { border-color: var(--gold-border); background: rgba(201,168,76,0.05); }
+    .vote-option .vote-info h3 { font-family: 'Playfair Display', serif; color: var(--text); font-size: 1em; }
+    .vote-option.voted .vote-info h3 { color: var(--gold); }
+    .vote-option .vote-info .card-meta { margin-top: 2px; }
+    .vote-count {
+      font-family: 'Playfair Display', serif; font-size: 1.8em;
+      color: var(--gold); min-width: 40px; text-align: center;
+      transition: all 0.3s;
     }
-
-    .history-item .rating-badge {
-      font-size: 0.8em;
-      padding: 2px 10px;
-      border-radius: 12px;
-      font-weight: 700;
+    .vote-winner {
+      text-align: center; padding: 30px 0;
+      animation: cardIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
+    .vote-winner h2 { font-size: 1.8em; margin-bottom: 8px; }
+    .vote-winner .vote-count { font-size: 3em; }
 
-    .rating-taste { background: rgba(201, 168, 76, 0.2); color: #c9a84c; }
-    .rating-price { background: rgba(255, 255, 255, 0.08); color: #a0998a; }
-    .rating-vibe { background: rgba(255, 255, 255, 0.08); color: #a0998a; }
-
-    .rate-btn {
-      margin-top: 8px;
-      padding: 6px 14px;
-      background: rgba(201, 168, 76, 0.15);
-      color: #c9a84c;
-      border: 1px solid rgba(201, 168, 76, 0.2);
-      border-radius: 6px;
-      font-weight: 600;
-      font-size: 0.85em;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .rate-btn:hover { transform: scale(1.05); }
-
-    /* Rating form inline */
-    .rating-form {
-      margin-top: 10px;
-      padding: 12px;
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 8px;
-    }
-
-    .rating-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 8px;
-    }
-
-    .rating-row label {
-      color: #7a7568;
-      font-weight: 600;
-      font-size: 0.9em;
-    }
-
-    .star-selector {
-      display: flex;
-      gap: 4px;
-    }
-
-    .star-selector span {
-      font-size: 1.4em;
-      cursor: pointer;
-      opacity: 0.3;
-      transition: opacity 0.15s;
-    }
-
-    .star-selector span.active { opacity: 1; }
-    .star-selector span:hover { opacity: 0.8; }
-
-    .rating-form .submit-btn {
-      padding: 10px;
-      font-size: 0.95em;
-      margin-top: 4px;
-    }
-
-    /* Blacklist items */
-    .blacklist-item {
-      background: rgba(255, 255, 255, 0.04);
-      border-radius: 8px;
-      padding: 12px 16px;
-      margin-bottom: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border: 1px solid rgba(255, 255, 255, 0.06);
-    }
-
-    .blacklist-item .name { font-weight: 600; color: #d4d0c8; }
-    .blacklist-item .reason {
-      font-size: 0.85em;
-      color: #8a6040;
-      margin-top: 2px;
-    }
-    .blacklist-item .cuisine-sm {
-      font-size: 0.8em;
-      color: #7a7568;
-    }
-
-    .restore-btn {
-      padding: 8px 14px;
-      background: rgba(201, 168, 76, 0.15);
-      color: #c9a84c;
-      border: 1px solid rgba(201, 168, 76, 0.2);
-      border-radius: 6px;
-      font-weight: 600;
-      font-size: 0.85em;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: all 0.2s;
-    }
-
-    .restore-btn:hover { transform: scale(1.05); }
-
-    .blacklist-tabs {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 15px;
-      flex-wrap: wrap;
-    }
-
-    .blacklist-tab {
-      padding: 6px 14px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 0.85em;
-      background: transparent;
-      color: #7a7568;
-      transition: all 0.2s;
-    }
-
-    .blacklist-tab.active {
-      background: rgba(201, 168, 76, 0.15);
-      color: #c9a84c;
-      border-color: rgba(201, 168, 76, 0.3);
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 30px;
-      color: #7a7568;
-    }
-
-    .form-group {
-      margin-bottom: 12px;
-    }
-
+    /* ---- Forms ---- */
+    .form-group { margin-bottom: 14px; }
     .form-group label {
-      display: block;
-      color: #7a7568;
-      margin-bottom: 4px;
-      font-weight: 600;
-      font-size: 0.9em;
-      text-transform: uppercase;
+      display: block; color: var(--text-dim); margin-bottom: 4px;
+      font-weight: 600; font-size: 0.8em; text-transform: uppercase;
       letter-spacing: 0.05em;
     }
-
     .form-group input, .form-group select, .form-group textarea {
-      width: 100%;
-      padding: 10px 14px;
-      background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      color: #d4d0c8;
-      font-size: 1em;
-      font-family: 'Inter', sans-serif;
+      width: 100%; padding: 11px 14px; background: var(--bg-input);
+      border: 1px solid var(--border); border-radius: 10px;
+      color: var(--text); font-size: 0.95em; font-family: inherit;
     }
-
     .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-      outline: none;
-      border-color: rgba(201, 168, 76, 0.5);
+      outline: none; border-color: rgba(201,168,76,0.5);
     }
 
-    .submit-btn {
-      width: 100%;
-      padding: 14px;
-      background: linear-gradient(135deg, #c9a84c, #a8893a);
-      color: #0d0d0d;
-      border: none;
-      border-radius: 8px;
-      font-size: 1em;
-      font-weight: 700;
-      cursor: pointer;
-      margin-top: 10px;
-      transition: all 0.3s;
-      letter-spacing: 0.03em;
+    /* ---- History ratings ---- */
+    .ratings { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .rating-badge {
+      font-size: 0.75em; padding: 3px 10px; border-radius: 6px; font-weight: 600;
     }
+    .rating-taste { background: var(--gold-dim); color: var(--gold); }
+    .rating-price { background: rgba(255,255,255,0.06); color: var(--text-dim); }
+    .rating-vibe { background: rgba(255,255,255,0.06); color: var(--text-dim); }
+    .rate-btn {
+      margin-top: 8px; padding: 6px 14px;
+      background: var(--gold-dim); color: var(--gold);
+      border: 1px solid var(--gold-border); border-radius: 6px;
+      font-weight: 600; font-size: 0.8em; cursor: pointer;
+      transition: all 0.2s; font-family: inherit;
+    }
+    .rate-btn:active { transform: scale(0.95); }
+    .rating-form {
+      margin-top: 10px; padding: 12px;
+      background: rgba(0,0,0,0.25); border-radius: 10px;
+    }
+    .rating-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .rating-row label { color: var(--text-dim); font-weight: 600; font-size: 0.85em; }
+    .star-selector { display: flex; gap: 4px; }
+    .star-selector span {
+      font-size: 1.4em; cursor: pointer; opacity: 0.25;
+      transition: all 0.15s;
+    }
+    .star-selector span.active { opacity: 1; }
+    .star-selector span:hover { opacity: 0.7; }
 
-    .submit-btn:hover { transform: translateY(-2px); }
+    /* ---- Blacklist ---- */
+    .blacklist-tabs { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+    .blacklist-tab {
+      padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px;
+      cursor: pointer; font-weight: 600; font-size: 0.8em;
+      background: transparent; color: var(--text-dim); transition: all 0.2s;
+      font-family: inherit;
+    }
+    .blacklist-tab.active { background: var(--gold-dim); color: var(--gold); border-color: var(--gold-border); }
 
-    /* Toast notification */
+    /* ---- Toast ---- */
     .toast {
-      position: fixed;
-      bottom: 30px;
-      left: 50%;
-      transform: translateX(-50%) translateY(100px);
-      background: #c9a84c;
-      color: #0d0d0d;
-      padding: 14px 24px;
-      border-radius: 8px;
-      font-weight: 600;
-      transition: transform 0.3s ease;
-      z-index: 1000;
+      position: fixed; bottom: calc(80px + var(--safe-bottom));
+      left: 50%; transform: translateX(-50%) translateY(60px);
+      background: var(--gold); color: var(--bg); padding: 12px 22px;
+      border-radius: 10px; font-weight: 600; font-size: 0.9em;
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 200; white-space: nowrap; max-width: 90%;
     }
-
     .toast.show { transform: translateX(-50%) translateY(0); }
-    .toast.error { background: #6b3a3a; color: #d4d0c8; }
+    .toast.error { background: var(--red); color: var(--text); }
 
-    /* Name input modal */
-    .name-modal {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 2000;
+    /* ---- Name Modal ---- */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 300; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    }
+    .modal-overlay.hidden { display: none; }
+    .modal-content {
+      background: var(--bg-card); border-radius: 16px; padding: 28px;
+      text-align: center; width: 90%; max-width: 380px;
+      border: 1px solid var(--gold-border);
+      animation: cardIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .modal-content h2 { margin-bottom: 8px; }
+    .modal-content p { color: var(--text-dim); font-size: 0.9em; margin-bottom: 16px; }
+    .modal-content input {
+      width: 100%; padding: 12px; background: var(--bg-input);
+      border: 1px solid var(--border); border-radius: 10px;
+      color: var(--text); font-size: 1.1em; text-align: center;
+      font-family: inherit; margin-bottom: 12px;
+    }
+    .modal-content input:focus { outline: none; border-color: rgba(201,168,76,0.5); }
+
+    /* ---- Edit Modal ---- */
+    .edit-modal { display: none; }
+    .edit-modal.active { display: flex; }
+
+    /* ---- Confetti Canvas ---- */
+    #confetti {
+      position: fixed; inset: 0; pointer-events: none; z-index: 500;
     }
 
-    .name-modal.hidden { display: none; }
-
-    .name-modal-content {
-      background: linear-gradient(135deg, #1a1a1a, #222222);
-      border-radius: 12px;
-      padding: 30px;
-      text-align: center;
-      width: 90%;
-      max-width: 400px;
-      border: 1px solid rgba(201, 168, 76, 0.2);
+    /* ---- PWA Install Banner ---- */
+    .install-banner {
+      background: var(--bg-card); border: 1px solid var(--gold-border);
+      border-radius: 12px; padding: 14px; margin-bottom: 12px;
+      display: none; align-items: center; gap: 12px;
     }
+    .install-banner.show { display: flex; }
+    .install-banner .install-text { flex: 1; font-size: 0.85em; color: var(--text-dim); }
+    .install-banner .install-text strong { color: var(--text); }
 
-    .name-modal-content h2 {
-      font-family: 'Playfair Display', serif;
-      color: #c9a84c;
-      margin-bottom: 10px;
+    /* ---- Empty state ---- */
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--text-dim); }
+    .empty-state .empty-icon { font-size: 3em; margin-bottom: 8px; }
+
+    /* ---- Section title ---- */
+    .section-title {
+      display: flex; justify-content: space-between; align-items: center;
+      margin: 20px 0 12px;
     }
+    .section-title h2 { font-size: 1.2em; }
+    .section-title .link { font-size: 0.8em; color: var(--gold); cursor: pointer; font-weight: 600; }
 
-    .name-modal-content input {
-      width: 100%;
-      padding: 12px;
-      background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      color: #d4d0c8;
-      font-size: 1.1em;
-      text-align: center;
-      margin: 15px 0;
-      font-family: 'Inter', sans-serif;
-    }
-
-    .name-modal-content input:focus {
-      outline: none;
-      border-color: rgba(201, 168, 76, 0.5);
-    }
-
+    /* ---- Footer ---- */
     .footer {
-      text-align: center;
-      padding: 20px;
-      color: #445566;
-      font-size: 0.85em;
+      text-align: center; color: var(--text-muted); font-size: 0.75em;
+      padding: 30px 0 10px; line-height: 1.6;
     }
+
+    /* ---- Misc ---- */
+    .action-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .divider { height: 1px; background: var(--border); margin: 20px 0; }
+    .text-center { text-align: center; }
+    .mt-12 { margin-top: 12px; }
+    .mb-12 { margin-bottom: 12px; }
   </style>
 </head>
 <body>
-  <!-- Name Modal -->
-  <div class="name-modal" id="nameModal">
-    <div class="name-modal-content">
-      <div style="font-size:60px">🦕</div>
-      <h2>Hey! Who are you?</h2>
-      <p style="color:#7a7568">So Dino knows who's hungry</p>
-      <input type="text" id="nameInput" placeholder="Your name..." autofocus>
-      <button class="main-btn btn-suggest" onclick="saveName()" style="margin:0">Let's eat!</button>
-    </div>
-  </div>
 
-  <div class="app">
+<!-- Confetti Canvas -->
+<canvas id="confetti"></canvas>
+
+<!-- Name Modal -->
+<div class="modal-overlay" id="nameModal">
+  <div class="modal-content">
+    <div style="font-size:3em;margin-bottom:8px">🦕</div>
+    <h2>Welcome to Dino</h2>
+    <p>What should we call you?</p>
+    <input type="text" id="nameInput" placeholder="Your name..." autofocus>
+    <button class="btn btn-primary" onclick="saveName()">Let's eat</button>
+  </div>
+</div>
+
+<!-- Edit Restaurant Modal -->
+<div class="modal-overlay edit-modal hidden" id="editModal">
+  <div class="modal-content" style="text-align:left;max-width:440px">
+    <h2 style="text-align:center;margin-bottom:16px">Edit Restaurant</h2>
+    <div class="form-group"><label>Name</label><input type="text" id="editName"></div>
+    <div class="form-group"><label>Cuisine</label><input type="text" id="editCuisine"></div>
+    <div class="form-group"><label>Address</label><input type="text" id="editAddress"></div>
+    <div class="form-group"><label>Walking minutes</label><input type="number" id="editWalking" min="0" max="30"></div>
+    <div class="form-group"><label>Price range</label>
+      <select id="editPrice"><option value="Budget">Budget</option><option value="Mid">Mid</option><option value="Upscale">Upscale</option></select>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea id="editNotes" rows="2"></textarea></div>
+    <button class="btn btn-primary" onclick="saveEdit()">Save changes</button>
+    <button class="btn btn-ghost mt-12" onclick="closeEditModal()">Cancel</button>
+  </div>
+</div>
+
+<!-- Main App -->
+<div class="app">
+
+  <!-- ===== HOME VIEW ===== -->
+  <div class="view active" id="viewHome">
     <div class="header">
       <div class="dino-emoji">🦕</div>
       <h1>DINO</h1>
-      <p>Your AV Stockholm dinner buddy</p>
-      <p style="font-size:0.85em; color:#556677" id="userGreeting"></p>
+      <div class="tagline">Your AV Stockholm dinner buddy</div>
+      <div class="greeting" id="userGreeting"></div>
     </div>
 
-    <button class="main-btn btn-suggest" onclick="suggestDinner()">🍽️ Suggest dinner!</button>
-
-    <div class="secondary-btns">
-      <button class="sec-btn btn-quick" onclick="suggestDinner('quick')">⚡ Quick bite</button>
-      <button class="sec-btn btn-friday" onclick="suggestDinner('friday')">🥂 Friday treat</button>
-      <button class="sec-btn btn-cheap" onclick="suggestDinner('budget')">💰 Cheap option</button>
-      <button class="sec-btn btn-new" onclick="suggestDinner('new')">✨ Something new</button>
+    <!-- PWA Install -->
+    <div class="install-banner" id="installBanner">
+      <span style="font-size:1.6em">📲</span>
+      <div class="install-text"><strong>Install Dino</strong><br>Add to home screen for the full experience</div>
+      <button class="btn btn-sm btn-primary" onclick="installPWA()">Install</button>
+      <button class="btn btn-sm btn-ghost" onclick="dismissInstall()" style="padding:10px 8px;min-width:0">✕</button>
     </div>
 
-    <button class="main-btn btn-history" onclick="showHistory()">📜 Where have we been?</button>
-    <button class="main-btn btn-add" onclick="showAddPanel()">➕ Add a restaurant</button>
-    <button class="main-btn btn-blacklist" onclick="showBlacklist()">🚫 Blacklisted restaurants</button>
+    <!-- Mood Chips -->
+    <div class="mood-chips">
+      <button class="mood-chip" data-mood="adventurous">🌍 Adventurous</button>
+      <button class="mood-chip" data-mood="comfort">🍝 Comfort food</button>
+      <button class="mood-chip" data-mood="quick">⚡ Quick & easy</button>
+      <button class="mood-chip" data-mood="fancy">🥂 Fancy night</button>
+      <button class="mood-chip" data-mood="budget">💰 On a budget</button>
+    </div>
+
+    <!-- Main Suggest -->
+    <button class="btn btn-primary" onclick="suggestDinner()" id="btnSuggest">Suggest dinner</button>
+
+    <!-- Swipe Mode Toggle -->
+    <button class="btn btn-secondary mt-12" onclick="startSwipeMode()">👆 Swipe mode — browse by swiping</button>
 
     <!-- Suggestion Card -->
     <div class="suggestion-card" id="suggestionCard">
       <h2 id="sugName"></h2>
-      <span class="cuisine-tag" id="sugCuisine"></span>
-      <span class="price-tag" id="sugPrice"></span>
+      <div class="card-tags">
+        <span class="tag tag-gold" id="sugCuisine"></span>
+        <span class="tag tag-muted" id="sugPrice"></span>
+      </div>
       <div class="detail" id="sugAddress"></div>
       <div class="detail" id="sugWalk"></div>
       <div class="dino-says" id="sugNotes"></div>
-      <div class="action-btns">
-        <button class="action-btn btn-go" onclick="confirmVisit()">✅ Let's go!</button>
-        <button class="action-btn btn-another" onclick="suggestDinner()">🔄 Another one</button>
-        <button class="action-btn btn-nope" onclick="blacklistCurrent('Blacklisted - Bad Food')">👎 Bad food</button>
-        <button class="action-btn btn-far" onclick="blacklistCurrent('Blacklisted - Too Far')">🚶 Too far</button>
-        <button class="action-btn btn-expensive" onclick="blacklistCurrent('Blacklisted - Too Expensive')">💸 Too pricey</button>
+      <div class="suggestion-actions">
+        <button class="btn btn-sm btn-primary" onclick="confirmVisit()">Let's go!</button>
+        <button class="btn btn-sm btn-secondary" onclick="suggestDinner()">Another</button>
+        <button class="btn btn-sm btn-danger" onclick="blacklistCurrent('Blacklisted - Bad Food')">Bad food</button>
+        <button class="btn btn-sm btn-ghost" onclick="blacklistCurrent('Blacklisted - Too Far')">Too far</button>
+        <button class="btn btn-sm btn-ghost" onclick="blacklistCurrent('Blacklisted - Too Expensive')">Too pricey</button>
       </div>
     </div>
 
-    <!-- History Panel -->
-    <div class="panel" id="historyPanel">
-      <h2>📜 Recent visits</h2>
-      <div id="historyList"></div>
+    <!-- Swipe Deck -->
+    <div class="swipe-container" id="swipeContainer">
+      <div id="swipeDeck"></div>
+    </div>
+    <div id="swipeProgress" style="display:none">
+      <div class="swipe-progress" id="swipeDots"></div>
+      <div class="swipe-hint">Swipe right = interested &middot; Swipe left = skip</div>
     </div>
 
-    <!-- Blacklist Panel -->
-    <div class="panel" id="blacklistPanel">
-      <h2>🚫 Blacklisted restaurants</h2>
-      <div class="blacklist-tabs">
-        <button class="blacklist-tab active" onclick="filterBlacklist('all')">All</button>
-        <button class="blacklist-tab" onclick="filterBlacklist('Bad Food')">👎 Bad food</button>
-        <button class="blacklist-tab" onclick="filterBlacklist('Too Far')">🚶 Too far</button>
-        <button class="blacklist-tab" onclick="filterBlacklist('Too Expensive')">💸 Too pricey</button>
-      </div>
-      <div id="blacklistList"></div>
+    <!-- Quick Actions -->
+    <div class="section-title"><h2>Quick links</h2></div>
+    <div class="btn-grid">
+      <button class="btn btn-secondary" onclick="showView('viewHistory')">📜 History</button>
+      <button class="btn btn-secondary" onclick="showView('viewVote')">🗳️ Group vote</button>
+      <button class="btn btn-secondary" onclick="showAddPanel()">➕ Add new</button>
+      <button class="btn btn-secondary" onclick="showBlacklist()">🚫 Blacklist</button>
     </div>
 
-    <!-- Add Restaurant Panel -->
-    <div class="panel" id="addPanel">
-      <h2>➕ Add a restaurant</h2>
-      <div class="form-group">
-        <label>Restaurant name</label>
-        <input type="text" id="addName" placeholder="e.g. Pasta Palace">
-      </div>
-      <div class="form-group">
-        <label>Cuisine</label>
-        <input type="text" id="addCuisine" placeholder="e.g. Italian, Thai, Swedish">
-      </div>
-      <div class="form-group">
-        <label>Address</label>
-        <input type="text" id="addAddress" placeholder="e.g. Sveavägen 42">
-      </div>
-      <div class="form-group">
-        <label>Walking minutes from office</label>
-        <input type="number" id="addWalking" placeholder="e.g. 5" min="0" max="30">
-      </div>
-      <div class="form-group">
-        <label>Price range</label>
-        <select id="addPrice">
-          <option value="Budget">Budget</option>
-          <option value="Mid" selected>Mid</option>
-          <option value="Upscale">Upscale</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Notes</label>
-        <textarea id="addNotes" rows="2" placeholder="Any comments..."></textarea>
-      </div>
-      <button class="submit-btn" onclick="addRestaurant()">Add to Dino's list 🦕</button>
-    </div>
-
-    <div class="footer">
-      🦕 Dino — AV Stockholm Dinner Buddy<br>
-      Office: Kungsgatan 2, Stockholm
-    </div>
+    <div class="footer">Dino — AV Stockholm Dinner Buddy<br>Office: Kungsgatan 2, Stockholm</div>
   </div>
 
-  <div class="toast" id="toast"></div>
+  <!-- ===== BROWSE VIEW ===== -->
+  <div class="view" id="viewBrowse">
+    <div class="section-title" style="margin-top:12px"><h2>All Restaurants</h2><span class="link" id="browseCount"></span></div>
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="browseSearch" placeholder="Search restaurants..." oninput="filterBrowse()">
+    </div>
+    <div class="filter-row" id="cuisineFilters"></div>
+    <div class="filter-row">
+      <button class="filter-chip active" data-price="all" onclick="setPriceFilter(this)">All prices</button>
+      <button class="filter-chip" data-price="Budget" onclick="setPriceFilter(this)">Budget</button>
+      <button class="filter-chip" data-price="Mid" onclick="setPriceFilter(this)">Mid</button>
+      <button class="filter-chip" data-price="Upscale" onclick="setPriceFilter(this)">Upscale</button>
+    </div>
+    <div id="browseList"></div>
+    <div id="browseSkeleton"></div>
+  </div>
 
-  <script>
-    // Supabase config
-    const SUPABASE_URL = 'https://qqznhnekffvwtuyqvatz.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxem5obmVrZmZ2d3R1eXF2YXR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1OTM2NTgsImV4cCI6MjA5MDE2OTY1OH0.oqpVcuiPNpyYeKAU3BP8A9PfSnJTEkx3WuMw4YIcOLU';
+  <!-- ===== STATS VIEW ===== -->
+  <div class="view" id="viewStats">
+    <div class="section-title" style="margin-top:12px"><h2>Your Stats</h2></div>
+    <div class="stat-grid" id="statGrid"></div>
 
-    let currentSuggestion = null;
-    let userName = '';
-    let lastMode = '';
-    let blacklistData = [];
-    let blacklistFilter = 'all';
+    <div class="section-title"><h2>Cuisines explored</h2></div>
+    <div class="chart-bar-container" id="cuisineChart"></div>
 
-    // Check if user has a name stored
-    function init() {
-      userName = getCookie('dino_user');
-      if (!userName) {
-        document.getElementById('nameModal').classList.remove('hidden');
+    <div class="section-title"><h2>Top rated</h2></div>
+    <div id="topRated"></div>
+
+    <div class="section-title"><h2>Most visited</h2></div>
+    <div id="mostVisited"></div>
+
+    <div class="divider"></div>
+    <div class="section-title"><h2>Achievements</h2></div>
+    <div id="achievementsList"></div>
+  </div>
+
+  <!-- ===== VOTE VIEW ===== -->
+  <div class="view" id="viewVote">
+    <div class="section-title" style="margin-top:12px"><h2>Group Vote</h2></div>
+
+    <!-- Vote Landing -->
+    <div id="voteLanding">
+      <div class="vote-setup">
+        <div style="font-size:3em;margin-bottom:8px">🗳️</div>
+        <p style="color:var(--text-dim);margin-bottom:20px">
+          Can't decide where to eat? Start a vote and let the team choose together — in real time.
+        </p>
+        <button class="btn btn-primary" onclick="createVoteSession()">Start a new vote</button>
+        <div class="divider"></div>
+        <p style="color:var(--text-dim);margin-bottom:12px;font-size:0.9em">Or join an existing vote:</p>
+        <input type="text" class="vote-join-input" id="joinCodeInput" placeholder="Enter code" maxlength="6">
+        <button class="btn btn-secondary mt-12" onclick="joinVoteSession()">Join vote</button>
+      </div>
+    </div>
+
+    <!-- Vote Active -->
+    <div id="voteActive" style="display:none">
+      <div class="text-center mb-12">
+        <div style="font-size:0.8em;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.1em">Session code</div>
+        <div class="vote-code" id="voteCodeDisplay"></div>
+        <button class="btn btn-sm btn-ghost" onclick="copyVoteLink()">Copy link to share</button>
+      </div>
+      <div class="voters-list" id="votersList"></div>
+      <div class="divider"></div>
+      <div id="voteOptions"></div>
+      <button class="btn btn-ghost mt-12" onclick="endVoteSession()">End vote</button>
+    </div>
+
+    <!-- Vote Result -->
+    <div id="voteResult" style="display:none"></div>
+  </div>
+
+  <!-- ===== HISTORY VIEW (from nav More) ===== -->
+  <div class="view" id="viewHistory">
+    <div class="section-title" style="margin-top:12px"><h2>Recent visits</h2></div>
+    <div id="historyList"></div>
+    <div id="historySkeleton"></div>
+  </div>
+
+  <!-- ===== BLACKLIST VIEW ===== -->
+  <div class="view" id="viewBlacklist">
+    <div class="section-title" style="margin-top:12px"><h2>Blacklisted</h2></div>
+    <div class="blacklist-tabs">
+      <button class="blacklist-tab active" onclick="filterBlacklist('all')">All</button>
+      <button class="blacklist-tab" onclick="filterBlacklist('Bad Food')">Bad food</button>
+      <button class="blacklist-tab" onclick="filterBlacklist('Too Far')">Too far</button>
+      <button class="blacklist-tab" onclick="filterBlacklist('Too Expensive')">Too pricey</button>
+    </div>
+    <div id="blacklistList"></div>
+  </div>
+
+  <!-- ===== ADD VIEW ===== -->
+  <div class="view" id="viewAdd">
+    <div class="section-title" style="margin-top:12px"><h2>Add restaurant</h2></div>
+    <div class="form-group"><label>Restaurant name</label><input type="text" id="addName" placeholder="e.g. Pasta Palace"></div>
+    <div class="form-group"><label>Cuisine</label><input type="text" id="addCuisine" placeholder="e.g. Italian, Thai, Swedish"></div>
+    <div class="form-group"><label>Address</label><input type="text" id="addAddress" placeholder="e.g. Sveavägen 42"></div>
+    <div class="form-group"><label>Walking minutes from office</label><input type="number" id="addWalking" placeholder="e.g. 5" min="0" max="30"></div>
+    <div class="form-group"><label>Price range</label>
+      <select id="addPrice"><option value="Budget">Budget</option><option value="Mid" selected>Mid</option><option value="Upscale">Upscale</option></select>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea id="addNotes" rows="2" placeholder="Any comments..."></textarea></div>
+    <button class="btn btn-primary" onclick="addRestaurant()">Add to Dino's list</button>
+  </div>
+
+</div><!-- /app -->
+
+<!-- Bottom Navigation -->
+<nav class="bottom-nav">
+  <button class="nav-item active" onclick="showView('viewHome')" data-view="viewHome">
+    <span class="icon">🏠</span>Home
+  </button>
+  <button class="nav-item" onclick="showView('viewBrowse')" data-view="viewBrowse">
+    <span class="icon">🔍</span>Browse
+  </button>
+  <button class="nav-item" onclick="showView('viewStats')" data-view="viewStats">
+    <span class="icon">📊</span>Stats
+  </button>
+  <button class="nav-item" onclick="showView('viewVote')" data-view="viewVote">
+    <span class="icon">🗳️</span>Vote
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// CONFIG & STATE
+// ============================================================
+const SUPABASE_URL = 'https://qqznhnekffvwtuyqvatz.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFxem5obmVrZmZ2d3R1eXF2YXR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1OTM2NTgsImV4cCI6MjA5MDE2OTY1OH0.oqpVcuiPNpyYeKAU3BP8A9PfSnJTEkx3WuMw4YIcOLU';
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let userName = '';
+let currentSuggestion = null;
+let lastMode = '';
+let allRestaurants = [];
+let allVisits = [];
+let blacklistData = [];
+let blacklistFilter = 'all';
+let browseData = [];
+let browsePrice = 'all';
+let editingId = null;
+let activeMood = '';
+let deferredInstallPrompt = null;
+let voteChannel = null;
+let voteSessionCode = '';
+let voteState = { voters: [], votes: {}, restaurants: [] };
+let swipeCards = [];
+let swipeIndex = 0;
+let swipeLiked = [];
+
+// ============================================================
+// SUPABASE HELPER
+// ============================================================
+async function api(table, method, options = {}) {
+  let url = `${SUPABASE_URL}/rest/v1/${table}`;
+  const headers = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Content-Type': 'application/json',
+    'Prefer': method === 'POST' ? 'return=representation' : ''
+  };
+  if (options.query) url += `?${options.query}`;
+  if (options.select) url += `${url.includes('?') ? '&' : '?'}select=${options.select}`;
+  const config = { method, headers };
+  if (options.body) config.body = JSON.stringify(options.body);
+  const res = await fetch(url, config);
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  userName = getCookie('dino_user');
+  if (!userName) {
+    document.getElementById('nameModal').classList.remove('hidden');
+  } else {
+    document.getElementById('nameModal').classList.add('hidden');
+    document.getElementById('userGreeting').textContent = `Hey ${userName}! Hungry?`;
+  }
+  document.getElementById('nameInput').addEventListener('keypress', e => { if (e.key === 'Enter') saveName(); });
+  document.getElementById('joinCodeInput').addEventListener('keypress', e => { if (e.key === 'Enter') joinVoteSession(); });
+
+  // Mood chip clicks
+  document.querySelectorAll('.mood-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const mood = chip.dataset.mood;
+      if (activeMood === mood) { activeMood = ''; chip.classList.remove('active'); }
+      else {
+        document.querySelectorAll('.mood-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        activeMood = mood;
+      }
+    });
+  });
+
+  // Check URL for vote session
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('vote')) {
+    document.getElementById('joinCodeInput').value = params.get('vote');
+    showView('viewVote');
+    setTimeout(() => joinVoteSession(), 500);
+  }
+
+  // PWA install
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    if (!localStorage.getItem('dino_install_dismissed')) {
+      document.getElementById('installBanner').classList.add('show');
+    }
+  });
+
+  // Register service worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+}
+
+function saveName() {
+  const name = document.getElementById('nameInput').value.trim();
+  if (!name) return;
+  userName = name;
+  setCookie('dino_user', name, 365);
+  document.getElementById('nameModal').classList.add('hidden');
+  document.getElementById('userGreeting').textContent = `Hey ${userName}! Hungry?`;
+}
+
+function installPWA() {
+  if (deferredInstallPrompt) { deferredInstallPrompt.prompt(); }
+  document.getElementById('installBanner').classList.remove('show');
+}
+function dismissInstall() {
+  document.getElementById('installBanner').classList.remove('show');
+  localStorage.setItem('dino_install_dismissed', '1');
+}
+
+function setCookie(n, v, d) { const dt = new Date(); dt.setTime(dt.getTime() + d*864e5); document.cookie = `${n}=${v};expires=${dt.toUTCString()};path=/`; }
+function getCookie(n) { const m = document.cookie.match('(^|;) ?' + n + '=([^;]*)(;|$)'); return m ? decodeURIComponent(m[2]) : null; }
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showView(viewId) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(viewId).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === viewId));
+
+  // Load data for views
+  if (viewId === 'viewBrowse') loadBrowse();
+  if (viewId === 'viewStats') loadStats();
+  if (viewId === 'viewHistory') loadHistory();
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showAddPanel() { showView('viewAdd'); }
+function showBlacklist() { showView('viewBlacklist'); loadBlacklist(); }
+
+// ============================================================
+// DINO PERSONALITY
+// ============================================================
+const dinoQuips = [
+  "Dino thinks this one's a winner!",
+  "This place is close and tasty!",
+  "Trust Dino — this is the spot tonight!",
+  "If Dino had hands, Dino would book a table right now!",
+  "Ancient Dino wisdom says: go here!",
+  "Dino's pick of the day!",
+  "Dino went here last week... wait, no, that was a dream.",
+  "This one smells good! (Dino has a great nose)",
+  "Rawr-approved!",
+  "Even a 65 million year old dino knows good food!"
+];
+
+function getMoodFilters() {
+  const moods = {
+    adventurous: r => !['Swedish', 'American'].includes(r.cuisine),
+    comfort: r => ['Italian', 'Swedish', 'American', 'Thai', 'Indian', 'Ramen'].includes(r.cuisine),
+    quick: r => (r.walking_minutes || 99) <= 5,
+    fancy: r => r.price_range === 'Upscale' || r.price_range === 'Mid',
+    budget: r => r.price_range === 'Budget'
+  };
+  return moods[activeMood] || null;
+}
+
+// ============================================================
+// SUGGEST DINNER
+// ============================================================
+async function suggestDinner() {
+  const btn = document.getElementById('btnSuggest');
+  btn.disabled = true; btn.textContent = 'Thinking...';
+
+  // Hide swipe if active
+  document.getElementById('swipeContainer').classList.remove('active');
+  document.getElementById('swipeProgress').style.display = 'none';
+
+  try {
+    const restaurants = await api('restaurants', 'GET', { query: 'status=eq.Available&order=name' });
+    if (!restaurants || !restaurants.length) { showToast('No restaurants available!', true); return; }
+
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const dateStr = thirtyDaysAgo.toISOString().split('T')[0];
+
+    const recentVisits = await api('visits', 'GET', { query: `visited_date=gte.${dateStr}&select=restaurant_id` });
+    const recentIds = new Set((recentVisits || []).map(v => v.restaurant_id));
+    let available = restaurants.filter(r => !recentIds.has(r.id));
+
+    // Apply mood filter
+    const moodFilter = getMoodFilters();
+    if (moodFilter) available = available.filter(moodFilter);
+
+    if (!available.length) {
+      showToast("No matches! Try a different mood.", true);
+      return;
+    }
+
+    const pick = available[Math.floor(Math.random() * available.length)];
+    currentSuggestion = pick;
+    renderSuggestion(pick);
+    document.getElementById('suggestionCard').classList.add('active');
+    vibrate();
+
+  } catch (err) {
+    console.error(err);
+    showToast('Something went wrong!', true);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Suggest dinner';
+  }
+}
+
+function renderSuggestion(pick) {
+  document.getElementById('sugName').textContent = pick.name;
+  document.getElementById('sugCuisine').textContent = pick.cuisine || 'Mixed';
+  document.getElementById('sugPrice').textContent = pick.price_range || 'Mid';
+  document.getElementById('sugAddress').textContent = pick.address ? `📍 ${pick.address}` : '';
+  document.getElementById('sugWalk').textContent = pick.walking_minutes ? `🚶 ${pick.walking_minutes} min walk` : '';
+  document.getElementById('sugNotes').textContent = pick.notes || dinoQuips[Math.floor(Math.random() * dinoQuips.length)];
+}
+
+async function confirmVisit() {
+  if (!currentSuggestion) return;
+  try {
+    await api('visits', 'POST', {
+      body: {
+        restaurant_id: currentSuggestion.id,
+        visited_date: new Date().toISOString().split('T')[0],
+        suggested_by: userName || 'Anonymous',
+        rating: 'Good'
+      }
+    });
+    showToast(`Enjoy ${currentSuggestion.name}!`);
+    fireConfetti();
+    vibrate(100);
+    document.getElementById('suggestionCard').classList.remove('active');
+  } catch (err) {
+    console.error(err); showToast('Could not log visit!', true);
+  }
+}
+
+async function blacklistCurrent(reason) {
+  if (!currentSuggestion) return;
+  try {
+    await api('restaurants', 'PATCH', {
+      query: `id=eq.${currentSuggestion.id}`,
+      body: { status: reason }
+    });
+    showToast(`${currentSuggestion.name} blacklisted`);
+    document.getElementById('suggestionCard').classList.remove('active');
+    suggestDinner();
+  } catch (err) {
+    console.error(err); showToast('Could not blacklist!', true);
+  }
+}
+
+// ============================================================
+// SWIPE MODE
+// ============================================================
+async function startSwipeMode() {
+  document.getElementById('suggestionCard').classList.remove('active');
+
+  try {
+    const restaurants = await api('restaurants', 'GET', { query: 'status=eq.Available&order=name' });
+    if (!restaurants || restaurants.length < 2) { showToast('Need more restaurants for swipe mode!', true); return; }
+
+    let available = [...restaurants];
+    const moodFilter = getMoodFilters();
+    if (moodFilter) available = available.filter(moodFilter);
+    if (available.length < 2) { showToast('Not enough restaurants for this mood!', true); return; }
+
+    // Shuffle and take up to 8
+    available.sort(() => Math.random() - 0.5);
+    swipeCards = available.slice(0, Math.min(8, available.length));
+    swipeIndex = 0;
+    swipeLiked = [];
+
+    document.getElementById('swipeContainer').classList.add('active');
+    document.getElementById('swipeProgress').style.display = 'block';
+    renderSwipeDots();
+    renderSwipeCard();
+  } catch (err) {
+    console.error(err); showToast('Could not load restaurants!', true);
+  }
+}
+
+function renderSwipeDots() {
+  const container = document.getElementById('swipeDots');
+  container.innerHTML = swipeCards.map((_, i) =>
+    `<div class="swipe-dot ${i < swipeIndex ? 'done' : ''} ${i === swipeIndex ? 'current' : ''}"></div>`
+  ).join('');
+}
+
+function renderSwipeCard() {
+  const deck = document.getElementById('swipeDeck');
+  if (swipeIndex >= swipeCards.length) {
+    finishSwipe();
+    return;
+  }
+
+  const r = swipeCards[swipeIndex];
+  deck.innerHTML = `
+    <div class="swipe-card" id="currentSwipeCard">
+      <span class="swipe-indicator swipe-yes">INTERESTED</span>
+      <span class="swipe-indicator swipe-no">SKIP</span>
+      <h2>${escHtml(r.name)}</h2>
+      <div class="card-tags">
+        <span class="tag tag-gold">${escHtml(r.cuisine || 'Mixed')}</span>
+        <span class="tag tag-muted">${escHtml(r.price_range || 'Mid')}</span>
+      </div>
+      <div class="detail">${r.address ? '📍 ' + escHtml(r.address) : ''}</div>
+      <div class="detail">${r.walking_minutes ? '🚶 ' + r.walking_minutes + ' min walk' : ''}</div>
+    </div>
+  `;
+  renderSwipeDots();
+  initSwipeGesture(document.getElementById('currentSwipeCard'));
+}
+
+function initSwipeGesture(card) {
+  let startX = 0, currentX = 0, isDragging = false;
+
+  function onStart(e) {
+    isDragging = true;
+    startX = e.touches ? e.touches[0].clientX : e.clientX;
+    card.style.transition = 'none';
+  }
+  function onMove(e) {
+    if (!isDragging) return;
+    currentX = (e.touches ? e.touches[0].clientX : e.clientX) - startX;
+    card.style.transform = `translateX(${currentX}px) rotate(${currentX * 0.05}deg)`;
+    const yesEl = card.querySelector('.swipe-yes');
+    const noEl = card.querySelector('.swipe-no');
+    yesEl.style.opacity = Math.min(currentX / 80, 1);
+    noEl.style.opacity = Math.min(-currentX / 80, 1);
+  }
+  function onEnd() {
+    if (!isDragging) return;
+    isDragging = false;
+    card.style.transition = 'transform 0.3s ease';
+    if (Math.abs(currentX) > 80) {
+      const direction = currentX > 0 ? 1 : -1;
+      card.style.transform = `translateX(${direction * 400}px) rotate(${direction * 20}deg)`;
+      card.style.opacity = '0';
+      if (direction > 0) swipeLiked.push(swipeCards[swipeIndex]);
+      vibrate();
+      swipeIndex++;
+      setTimeout(renderSwipeCard, 250);
+    } else {
+      card.style.transform = '';
+      card.querySelector('.swipe-yes').style.opacity = '0';
+      card.querySelector('.swipe-no').style.opacity = '0';
+    }
+    currentX = 0;
+  }
+
+  card.addEventListener('pointerdown', onStart);
+  document.addEventListener('pointermove', onMove);
+  document.addEventListener('pointerup', onEnd);
+}
+
+function finishSwipe() {
+  const deck = document.getElementById('swipeDeck');
+  document.getElementById('swipeProgress').style.display = 'none';
+
+  if (swipeLiked.length === 0) {
+    deck.innerHTML = '<div class="empty-state"><div class="empty-icon">🦕</div><p>No matches! Try again with a different mood.</p></div>';
+    return;
+  }
+
+  const winner = swipeLiked[Math.floor(Math.random() * swipeLiked.length)];
+  currentSuggestion = winner;
+  deck.innerHTML = '';
+  document.getElementById('swipeContainer').classList.remove('active');
+  renderSuggestion(winner);
+  document.getElementById('suggestionCard').classList.add('active');
+  fireConfetti();
+}
+
+// ============================================================
+// BROWSE / SEARCH / EDIT
+// ============================================================
+async function loadBrowse() {
+  const list = document.getElementById('browseList');
+  const skel = document.getElementById('browseSkeleton');
+  list.innerHTML = '';
+  skel.innerHTML = '<div class="skeleton skeleton-card"></div>'.repeat(4);
+
+  try {
+    browseData = await api('restaurants', 'GET', { query: 'order=name' }) || [];
+    skel.innerHTML = '';
+
+    // Build cuisine filters
+    const cuisines = [...new Set(browseData.map(r => r.cuisine).filter(Boolean))].sort();
+    const cf = document.getElementById('cuisineFilters');
+    cf.innerHTML = `<button class="filter-chip active" data-cuisine="all" onclick="setCuisineFilter(this)">All cuisines</button>` +
+      cuisines.map(c => `<button class="filter-chip" data-cuisine="${escHtml(c)}" onclick="setCuisineFilter(this)">${escHtml(c)}</button>`).join('');
+
+    filterBrowse();
+  } catch (err) {
+    console.error(err);
+    skel.innerHTML = '';
+    showToast('Could not load restaurants!', true);
+  }
+}
+
+let browseCuisine = 'all';
+function setCuisineFilter(el) {
+  browseCuisine = el.dataset.cuisine;
+  document.querySelectorAll('#cuisineFilters .filter-chip').forEach(c => c.classList.toggle('active', c === el));
+  filterBrowse();
+}
+function setPriceFilter(el) {
+  browsePrice = el.dataset.price;
+  el.parentElement.querySelectorAll('.filter-chip').forEach(c => c.classList.toggle('active', c === el));
+  filterBrowse();
+}
+
+function filterBrowse() {
+  const q = (document.getElementById('browseSearch').value || '').toLowerCase();
+  let filtered = browseData;
+
+  if (q) filtered = filtered.filter(r => (r.name + ' ' + (r.cuisine||'') + ' ' + (r.address||'')).toLowerCase().includes(q));
+  if (browseCuisine !== 'all') filtered = filtered.filter(r => r.cuisine === browseCuisine);
+  if (browsePrice !== 'all') filtered = filtered.filter(r => r.price_range === browsePrice);
+
+  document.getElementById('browseCount').textContent = `${filtered.length} restaurants`;
+  const list = document.getElementById('browseList');
+
+  if (!filtered.length) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div><p>No restaurants match your filters</p></div>';
+    return;
+  }
+
+  list.innerHTML = filtered.map(r => {
+    const statusTag = r.status === 'Available'
+      ? '<span class="tag tag-green">Available</span>'
+      : `<span class="tag tag-red">${escHtml(r.status.replace('Blacklisted - ', ''))}</span>`;
+    return `
+    <div class="card" onclick="openEdit(${r.id})" style="cursor:pointer">
+      <div class="card-header">
+        <div>
+          <div class="card-title">${escHtml(r.name)}</div>
+          <div class="card-meta">${r.address ? '📍 ' + escHtml(r.address) : ''} ${r.walking_minutes ? '· 🚶 ' + r.walking_minutes + ' min' : ''}</div>
+        </div>
+      </div>
+      <div class="card-tags">
+        <span class="tag tag-gold">${escHtml(r.cuisine || 'Mixed')}</span>
+        <span class="tag tag-muted">${escHtml(r.price_range || 'Mid')}</span>
+        ${statusTag}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openEdit(id) {
+  const r = browseData.find(x => x.id === id);
+  if (!r) return;
+  editingId = id;
+  document.getElementById('editName').value = r.name || '';
+  document.getElementById('editCuisine').value = r.cuisine || '';
+  document.getElementById('editAddress').value = r.address || '';
+  document.getElementById('editWalking').value = r.walking_minutes || '';
+  document.getElementById('editPrice').value = r.price_range || 'Mid';
+  document.getElementById('editNotes').value = r.notes || '';
+  document.getElementById('editModal').classList.remove('hidden');
+  document.getElementById('editModal').classList.add('active');
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').classList.add('hidden');
+  document.getElementById('editModal').classList.remove('active');
+  editingId = null;
+}
+
+async function saveEdit() {
+  if (!editingId) return;
+  const name = document.getElementById('editName').value.trim();
+  if (!name) { showToast('Name is required!', true); return; }
+  try {
+    await api('restaurants', 'PATCH', {
+      query: `id=eq.${editingId}`,
+      body: {
+        name,
+        cuisine: document.getElementById('editCuisine').value.trim(),
+        address: document.getElementById('editAddress').value.trim(),
+        walking_minutes: parseInt(document.getElementById('editWalking').value) || 0,
+        price_range: document.getElementById('editPrice').value,
+        notes: document.getElementById('editNotes').value.trim()
+      }
+    });
+    showToast(`${name} updated!`);
+    closeEditModal();
+    loadBrowse();
+  } catch (err) {
+    console.error(err); showToast('Could not save!', true);
+  }
+}
+
+// ============================================================
+// HISTORY
+// ============================================================
+async function loadHistory() {
+  const list = document.getElementById('historyList');
+  const skel = document.getElementById('historySkeleton');
+  list.innerHTML = '';
+  skel.innerHTML = '<div class="skeleton skeleton-card"></div>'.repeat(3);
+
+  try {
+    const visits = await api('visits', 'GET', {
+      query: 'order=visited_date.desc&limit=50',
+      select: 'id,visited_date,suggested_by,rating,notes,restaurant_id,restaurants(name,cuisine)'
+    });
+    skel.innerHTML = '';
+
+    if (!visits || !visits.length) {
+      list.innerHTML = '<div class="empty-state"><div class="empty-icon">🦕</div><p>No visits yet! Go eat somewhere!</p></div>';
+      return;
+    }
+
+    list.innerHTML = visits.map(v => {
+      const name = v.restaurants ? v.restaurants.name : `Restaurant #${v.restaurant_id}`;
+      const date = new Date(v.visited_date).toLocaleDateString('sv-SE');
+      const stars = parseStarRatings(v.notes);
+
+      let ratingsHTML = '';
+      if (stars) {
+        ratingsHTML = `<div class="ratings">
+          ${stars.taste ? `<span class="rating-badge rating-taste">Taste ${'★'.repeat(stars.taste)}${'☆'.repeat(5-stars.taste)}</span>` : ''}
+          ${stars.price ? `<span class="rating-badge rating-price">Price ${'★'.repeat(stars.price)}${'☆'.repeat(5-stars.price)}</span>` : ''}
+          ${stars.vibe ? `<span class="rating-badge rating-vibe">Vibe ${'★'.repeat(stars.vibe)}${'☆'.repeat(5-stars.vibe)}</span>` : ''}
+        </div>`;
       } else {
-        document.getElementById('nameModal').classList.add('hidden');
-        document.getElementById('userGreeting').textContent = `Hey ${userName}! Hungry? 🦕`;
+        ratingsHTML = `<button class="rate-btn" onclick="showRatingForm(${v.id})">Rate this visit</button>`;
       }
-      document.getElementById('nameInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') saveName();
-      });
-    }
 
-    function saveName() {
-      const name = document.getElementById('nameInput').value.trim();
-      if (!name) return;
-      userName = name;
-      setCookie('dino_user', name, 365);
-      document.getElementById('nameModal').classList.add('hidden');
-      document.getElementById('userGreeting').textContent = `Hey ${userName}! Hungry? 🦕`;
-    }
+      return `
+      <div class="card" id="visit-${v.id}">
+        <div class="card-header">
+          <div>
+            <div class="card-title">${escHtml(name)}</div>
+            <div class="card-meta">by ${escHtml(v.suggested_by || 'unknown')}</div>
+          </div>
+          <div class="card-meta">${date}</div>
+        </div>
+        ${ratingsHTML}
+        <div class="action-btns" style="margin-top:8px">
+          <button class="rate-btn" onclick="showBlacklistOptions(this, ${v.restaurant_id}, '${escAttr(name)}')">Blacklist</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (err) {
+    console.error(err); skel.innerHTML = '';
+    showToast('Could not load history!', true);
+  }
+}
 
-    function setCookie(name, value, days) {
-      const d = new Date();
-      d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
-      document.cookie = `${name}=${value};expires=${d.toUTCString()};path=/`;
-    }
+function parseStarRatings(s) {
+  if (!s) return null;
+  try { const p = JSON.parse(s); if (p.taste || p.price || p.vibe) return p; } catch (e) {}
+  return null;
+}
 
-    function getCookie(name) {
-      const v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
-      return v ? v[2] : null;
-    }
+function showRatingForm(visitId) {
+  const item = document.getElementById(`visit-${visitId}`);
+  const btn = item.querySelector('.rate-btn');
+  if (btn) btn.remove();
+  if (item.querySelector('.rating-form')) return;
 
-    // Supabase API helper
-    async function supabase(table, method, options = {}) {
-      let url = `${SUPABASE_URL}/rest/v1/${table}`;
-      const headers = {
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': method === 'POST' ? 'return=representation' : ''
-      };
+  const form = document.createElement('div');
+  form.className = 'rating-form';
+  form.innerHTML = `
+    <div class="rating-row"><label>Taste</label>
+      <div class="star-selector" data-field="taste">${[1,2,3,4,5].map(n => `<span onclick="setStar(this,${n})">★</span>`).join('')}</div>
+    </div>
+    <div class="rating-row"><label>Price</label>
+      <div class="star-selector" data-field="price">${[1,2,3,4,5].map(n => `<span onclick="setStar(this,${n})">★</span>`).join('')}</div>
+    </div>
+    <div class="rating-row"><label>Vibe</label>
+      <div class="star-selector" data-field="vibe">${[1,2,3,4,5].map(n => `<span onclick="setStar(this,${n})">★</span>`).join('')}</div>
+    </div>
+    <button class="btn btn-primary btn-sm mt-12" onclick="submitRating(${visitId})">Save rating</button>
+  `;
+  item.appendChild(form);
+}
 
-      if (options.query) url += `?${options.query}`;
-      if (options.select) url += `${url.includes('?') ? '&' : '?'}select=${options.select}`;
+function setStar(el, value) {
+  const c = el.parentElement;
+  c.dataset.value = value;
+  c.querySelectorAll('span').forEach((s, i) => s.classList.toggle('active', i < value));
+  vibrate(15);
+}
 
-      const config = { method, headers };
-      if (options.body) config.body = JSON.stringify(options.body);
+async function submitRating(visitId) {
+  const item = document.getElementById(`visit-${visitId}`);
+  const taste = item.querySelector('[data-field="taste"]')?.dataset.value;
+  const price = item.querySelector('[data-field="price"]')?.dataset.value;
+  const vibe = item.querySelector('[data-field="vibe"]')?.dataset.value;
+  if (!taste && !price && !vibe) { showToast('Tap some stars first!', true); return; }
 
-      const res = await fetch(url, config);
-      if (!res.ok) throw new Error(`API error: ${res.status}`);
-      const text = await res.text();
-      return text ? JSON.parse(text) : null;
-    }
+  const obj = {};
+  if (taste) obj.taste = parseInt(taste);
+  if (price) obj.price = parseInt(price);
+  if (vibe) obj.vibe = parseInt(vibe);
 
-    // Dino's personality - random quips
-    const dinoQuips = [
-      "Dino thinks this one's a winner! 🦕",
-      "Rawr! This place is close and tasty!",
-      "Dino's tummy says yes to this one!",
-      "Trust Dino — this is the spot tonight!",
-      "Dino went here last week... wait, no, that was a dream.",
-      "If Dino had hands, Dino would book a table right now!",
-      "This one smells good! (Dino has a great nose)",
-      "Dino approves! 🦕✨",
-      "Ancient Dino wisdom says: go here!",
-      "Dino's pick of the day!"
-    ];
+  try {
+    await api('visits', 'PATCH', { query: `id=eq.${visitId}`, body: { notes: JSON.stringify(obj) } });
+    showToast('Rating saved!');
+    vibrate(50);
+    loadHistory();
+  } catch (err) {
+    console.error(err); showToast('Could not save rating!', true);
+  }
+}
 
-    async function suggestDinner(mode = '') {
-      lastMode = mode;
-      hideAll();
+function showBlacklistOptions(btn, restaurantId, name) {
+  const wrap = btn.parentElement;
+  wrap.innerHTML = `
+    <button class="btn btn-sm btn-danger" onclick="blacklistFromHistory(${restaurantId},'${escAttr(name)}','Bad Food')">Bad food</button>
+    <button class="btn btn-sm btn-ghost" onclick="blacklistFromHistory(${restaurantId},'${escAttr(name)}','Too Far')">Too far</button>
+    <button class="btn btn-sm btn-ghost" onclick="blacklistFromHistory(${restaurantId},'${escAttr(name)}','Too Expensive')">Too pricey</button>
+  `;
+}
 
-      try {
-        let query = 'status=eq.Available&order=name';
-        const restaurants = await supabase('restaurants', 'GET', { query });
+async function blacklistFromHistory(restaurantId, name, reason) {
+  try {
+    await api('restaurants', 'PATCH', { query: `id=eq.${restaurantId}`, body: { status: `Blacklisted - ${reason}` } });
+    showToast(`${name} blacklisted`);
+    loadHistory();
+  } catch (err) {
+    console.error(err); showToast('Could not blacklist!', true);
+  }
+}
 
-        if (!restaurants || restaurants.length === 0) {
-          showToast('No restaurants available! Add some first.', true);
-          return;
-        }
+// ============================================================
+// BLACKLIST
+// ============================================================
+async function loadBlacklist() {
+  try {
+    blacklistData = await api('restaurants', 'GET', { query: 'status=neq.Available&order=name' }) || [];
+    blacklistFilter = 'all';
+    document.querySelectorAll('.blacklist-tab').forEach((t, i) => t.classList.toggle('active', i === 0));
+    renderBlacklist();
+  } catch (err) {
+    console.error(err); showToast('Could not load blacklist!', true);
+  }
+}
 
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        const dateStr = thirtyDaysAgo.toISOString().split('T')[0];
+function filterBlacklist(filter) {
+  blacklistFilter = filter;
+  document.querySelectorAll('.blacklist-tab').forEach(t => {
+    const f = t.textContent.includes('All') ? 'all' : t.textContent.includes('food') ? 'Bad Food' : t.textContent.includes('far') ? 'Too Far' : 'Too Expensive';
+    t.classList.toggle('active', f === filter);
+  });
+  renderBlacklist();
+}
 
-        const recentVisits = await supabase('visits', 'GET', {
-          query: `visited_date=gte.${dateStr}&select=restaurant_id`
-        });
+function renderBlacklist() {
+  let filtered = blacklistFilter === 'all' ? blacklistData : blacklistData.filter(r => r.status.includes(blacklistFilter));
+  const list = document.getElementById('blacklistList');
 
-        const recentIds = new Set((recentVisits || []).map(v => v.restaurant_id));
-        let available = restaurants.filter(r => !recentIds.has(r.id));
+  if (!filtered.length) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">🦕</div><p>No blacklisted restaurants here!</p></div>';
+    return;
+  }
 
-        if (mode === 'budget') {
-          available = available.filter(r => r.price_range === 'Budget');
-        } else if (mode === 'friday') {
-          available = available.filter(r => r.price_range === 'Upscale' || r.price_range === 'Mid');
-        } else if (mode === 'quick') {
-          available = available.filter(r => r.walking_minutes <= 4);
-        } else if (mode === 'new') {
-          const allVisits = await supabase('visits', 'GET', { query: 'select=restaurant_id' });
-          const allVisitedIds = new Set((allVisits || []).map(v => v.restaurant_id));
-          available = available.filter(r => !allVisitedIds.has(r.id));
-        }
+  list.innerHTML = filtered.map(r => {
+    const reason = r.status.replace('Blacklisted - ', '');
+    const emoji = reason === 'Bad Food' ? '👎' : reason === 'Too Far' ? '🚶' : '💸';
+    return `
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">${escHtml(r.name)}</div>
+          <div class="card-meta">${escHtml(r.cuisine || 'Mixed')} · ${escHtml(r.address || '')}</div>
+          <div style="margin-top:4px"><span class="tag tag-red">${emoji} ${escHtml(reason)}</span></div>
+        </div>
+        <button class="btn btn-sm btn-secondary" onclick="restoreRestaurant(${r.id},'${escAttr(r.name)}')">Restore</button>
+      </div>
+    </div>`;
+  }).join('');
+}
 
-        if (available.length === 0) {
-          showToast("Dino's out of ideas! You've been everywhere recently 🦕", true);
-          return;
-        }
+async function restoreRestaurant(id, name) {
+  try {
+    await api('restaurants', 'PATCH', { query: `id=eq.${id}`, body: { status: 'Available' } });
+    showToast(`${name} is back!`);
+    loadBlacklist();
+  } catch (err) {
+    console.error(err); showToast('Could not restore!', true);
+  }
+}
 
-        const pick = available[Math.floor(Math.random() * available.length)];
-        currentSuggestion = pick;
+// ============================================================
+// ADD RESTAURANT
+// ============================================================
+async function addRestaurant() {
+  const name = document.getElementById('addName').value.trim();
+  if (!name) { showToast('Give the restaurant a name!', true); return; }
 
-        document.getElementById('sugName').textContent = pick.name;
-        document.getElementById('sugCuisine').textContent = pick.cuisine || 'Mixed';
-        document.getElementById('sugPrice').textContent = pick.price_range || 'Mid';
-        document.getElementById('sugAddress').textContent = `📍 ${pick.address || 'Address unknown'}`;
-        document.getElementById('sugWalk').textContent = `🚶 ${pick.walking_minutes || '?'} min walk from office`;
-        document.getElementById('sugNotes').textContent = `🦕 "${pick.notes || dinoQuips[Math.floor(Math.random() * dinoQuips.length)]}"`;
-
-        document.getElementById('suggestionCard').classList.add('active');
-
-      } catch (err) {
-        console.error(err);
-        showToast('Dino tripped! Something went wrong.', true);
+  try {
+    await api('restaurants', 'POST', {
+      body: {
+        name,
+        cuisine: document.getElementById('addCuisine').value.trim(),
+        address: document.getElementById('addAddress').value.trim(),
+        walking_minutes: parseInt(document.getElementById('addWalking').value) || 0,
+        price_range: document.getElementById('addPrice').value,
+        notes: document.getElementById('addNotes').value.trim()
       }
+    });
+    showToast(`Added ${name}!`);
+    fireConfetti();
+    ['addName','addCuisine','addAddress','addWalking','addNotes'].forEach(id => document.getElementById(id).value = '');
+    showView('viewHome');
+  } catch (err) {
+    console.error(err); showToast('Could not add restaurant!', true);
+  }
+}
+
+// ============================================================
+// STATS & ACHIEVEMENTS
+// ============================================================
+async function loadStats() {
+  const grid = document.getElementById('statGrid');
+  grid.innerHTML = '<div class="skeleton" style="height:80px"></div>'.repeat(4).split('</div>').map((s,i) => i < 4 ? s + '</div>' : '').join('');
+
+  try {
+    const [restaurants, visits] = await Promise.all([
+      api('restaurants', 'GET', { query: 'order=name' }),
+      api('visits', 'GET', {
+        query: 'order=visited_date.desc',
+        select: 'id,visited_date,suggested_by,notes,restaurant_id,restaurants(name,cuisine)'
+      })
+    ]);
+
+    allRestaurants = restaurants || [];
+    allVisits = visits || [];
+
+    const totalVisits = allVisits.length;
+    const uniqueRestaurants = new Set(allVisits.map(v => v.restaurant_id)).size;
+    const cuisines = new Set(allVisits.map(v => v.restaurants?.cuisine).filter(Boolean));
+    const uniqueCuisines = cuisines.size;
+
+    // Average rating
+    let ratingSum = 0, ratingCount = 0;
+    allVisits.forEach(v => {
+      const stars = parseStarRatings(v.notes);
+      if (stars) {
+        const vals = [stars.taste, stars.price, stars.vibe].filter(Boolean);
+        vals.forEach(val => { ratingSum += val; ratingCount++; });
+      }
+    });
+    const avgRating = ratingCount ? (ratingSum / ratingCount).toFixed(1) : '-';
+
+    grid.innerHTML = `
+      <div class="stat-box"><div class="stat-number">${totalVisits}</div><div class="stat-label">Total visits</div></div>
+      <div class="stat-box"><div class="stat-number">${uniqueRestaurants}</div><div class="stat-label">Restaurants tried</div></div>
+      <div class="stat-box"><div class="stat-number">${uniqueCuisines}</div><div class="stat-label">Cuisines explored</div></div>
+      <div class="stat-box"><div class="stat-number">${avgRating}</div><div class="stat-label">Avg rating</div></div>
+    `;
+
+    // Cuisine chart
+    const cuisineCounts = {};
+    allVisits.forEach(v => {
+      const c = v.restaurants?.cuisine || 'Other';
+      cuisineCounts[c] = (cuisineCounts[c] || 0) + 1;
+    });
+    const sorted = Object.entries(cuisineCounts).sort((a, b) => b[1] - a[1]);
+    const maxCount = sorted.length ? sorted[0][1] : 1;
+    document.getElementById('cuisineChart').innerHTML = sorted.slice(0, 8).map(([cuisine, count]) => `
+      <div class="chart-bar-row">
+        <div class="chart-bar-label">${escHtml(cuisine)}</div>
+        <div class="chart-bar-track">
+          <div class="chart-bar-fill" style="width:${(count / maxCount) * 100}%">${count}</div>
+        </div>
+      </div>
+    `).join('');
+
+    // Top rated
+    const restaurantRatings = {};
+    allVisits.forEach(v => {
+      const stars = parseStarRatings(v.notes);
+      if (!stars || !v.restaurants) return;
+      const name = v.restaurants.name;
+      if (!restaurantRatings[name]) restaurantRatings[name] = { sum: 0, count: 0, cuisine: v.restaurants.cuisine };
+      const vals = [stars.taste, stars.price, stars.vibe].filter(Boolean);
+      vals.forEach(val => { restaurantRatings[name].sum += val; restaurantRatings[name].count++; });
+    });
+    const topRated = Object.entries(restaurantRatings)
+      .map(([name, d]) => ({ name, avg: d.sum / d.count, cuisine: d.cuisine }))
+      .sort((a, b) => b.avg - a.avg).slice(0, 5);
+
+    document.getElementById('topRated').innerHTML = topRated.length
+      ? topRated.map(r => `
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">${escHtml(r.name)}</div><div class="card-meta">${escHtml(r.cuisine || '')}</div></div>
+            <div class="card-title">${r.avg.toFixed(1)} ★</div>
+          </div>
+        </div>`).join('')
+      : '<div class="empty-state"><p>Rate some visits to see top rated!</p></div>';
+
+    // Most visited
+    const visitCounts = {};
+    allVisits.forEach(v => {
+      const name = v.restaurants?.name || 'Unknown';
+      if (!visitCounts[name]) visitCounts[name] = { count: 0, cuisine: v.restaurants?.cuisine };
+      visitCounts[name].count++;
+    });
+    const mostVisited = Object.entries(visitCounts)
+      .map(([name, d]) => ({ name, count: d.count, cuisine: d.cuisine }))
+      .sort((a, b) => b.count - a.count).slice(0, 5);
+
+    document.getElementById('mostVisited').innerHTML = mostVisited.length
+      ? mostVisited.map(r => `
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">${escHtml(r.name)}</div><div class="card-meta">${escHtml(r.cuisine || '')}</div></div>
+            <div class="card-title">${r.count}x</div>
+          </div>
+        </div>`).join('')
+      : '<div class="empty-state"><p>Visit some restaurants first!</p></div>';
+
+    // Achievements
+    renderAchievements(totalVisits, uniqueRestaurants, uniqueCuisines, ratingCount);
+
+  } catch (err) {
+    console.error(err); showToast('Could not load stats!', true);
+  }
+}
+
+function renderAchievements(totalVisits, uniqueRest, uniqueCuis, totalRatings) {
+  const achievements = [
+    { icon: '🍽️', name: 'First Bite', desc: 'Visit your first restaurant', target: 1, current: totalVisits, type: 'visits' },
+    { icon: '🔟', name: 'Regular', desc: 'Visit 10 restaurants', target: 10, current: totalVisits, type: 'visits' },
+    { icon: '🏆', name: 'Power Diner', desc: 'Reach 25 visits', target: 25, current: totalVisits, type: 'visits' },
+    { icon: '💯', name: 'Centurion', desc: 'Reach 100 visits', target: 100, current: totalVisits, type: 'visits' },
+    { icon: '🌍', name: 'Explorer', desc: 'Try 5 different cuisines', target: 5, current: uniqueCuis, type: 'cuisines' },
+    { icon: '🗺️', name: 'World Traveler', desc: 'Try 10 different cuisines', target: 10, current: uniqueCuis, type: 'cuisines' },
+    { icon: '🔍', name: 'Variety Seeker', desc: 'Visit 10 unique restaurants', target: 10, current: uniqueRest, type: 'unique' },
+    { icon: '👑', name: 'Connoisseur', desc: 'Visit 25 unique restaurants', target: 25, current: uniqueRest, type: 'unique' },
+    { icon: '⭐', name: 'Critic', desc: 'Rate 5 visits', target: 5, current: totalRatings ? Math.floor(totalRatings/3) : 0, type: 'ratings' },
+    { icon: '📝', name: 'Master Critic', desc: 'Rate 20 visits', target: 20, current: totalRatings ? Math.floor(totalRatings/3) : 0, type: 'ratings' },
+  ];
+
+  document.getElementById('achievementsList').innerHTML = achievements.map(a => {
+    const unlocked = a.current >= a.target;
+    const pct = Math.min(100, (a.current / a.target) * 100);
+    return `
+    <div class="achievement ${unlocked ? 'unlocked' : 'locked'}">
+      <div class="badge">${a.icon}</div>
+      <div class="info">
+        <h3>${escHtml(a.name)}</h3>
+        <p>${escHtml(a.desc)}</p>
+        ${!unlocked ? `<div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+          <p style="font-size:0.7em;margin-top:2px">${a.current}/${a.target}</p>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// GROUP VOTING (Supabase Realtime Broadcast)
+// ============================================================
+function generateCode() {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
+async function createVoteSession() {
+  voteSessionCode = generateCode();
+  voteState = { voters: [userName || 'Host'], votes: {}, restaurants: [] };
+
+  // Fetch random restaurants for voting
+  try {
+    const restaurants = await api('restaurants', 'GET', { query: 'status=eq.Available&order=name' });
+    if (!restaurants || restaurants.length < 2) { showToast('Need more restaurants!', true); return; }
+
+    const shuffled = [...restaurants].sort(() => Math.random() - 0.5);
+    voteState.restaurants = shuffled.slice(0, Math.min(5, shuffled.length));
+    voteState.restaurants.forEach(r => { voteState.votes[r.id] = 0; });
+
+    joinChannel(voteSessionCode, true);
+    renderVoteActive();
+  } catch (err) {
+    console.error(err); showToast('Could not create vote!', true);
+  }
+}
+
+async function joinVoteSession() {
+  const code = document.getElementById('joinCodeInput').value.trim().toUpperCase();
+  if (!code) { showToast('Enter a code!', true); return; }
+  voteSessionCode = code;
+  voteState = { voters: [], votes: {}, restaurants: [] };
+  joinChannel(code, false);
+}
+
+function joinChannel(code, isHost) {
+  if (voteChannel) { sb.removeChannel(voteChannel); }
+
+  voteChannel = sb.channel(`vote-${code}`, { config: { broadcast: { self: true } } });
+
+  voteChannel.on('broadcast', { event: 'vote' }, ({ payload }) => {
+    if (payload.restaurantId && voteState.votes[payload.restaurantId] !== undefined) {
+      voteState.votes[payload.restaurantId] = payload.count;
     }
+    renderVoteOptions();
+  });
 
-    async function confirmVisit() {
-      if (!currentSuggestion) return;
+  voteChannel.on('broadcast', { event: 'join' }, ({ payload }) => {
+    if (!voteState.voters.includes(payload.name)) {
+      voteState.voters.push(payload.name);
+      renderVotersList();
+    }
+  });
 
-      try {
-        await supabase('visits', 'POST', {
-          body: {
-            restaurant_id: currentSuggestion.id,
-            visited_date: new Date().toISOString().split('T')[0],
-            suggested_by: userName || 'Anonymous',
-            rating: 'Good'
+  voteChannel.on('broadcast', { event: 'state' }, ({ payload }) => {
+    if (!isHost) {
+      voteState.restaurants = payload.restaurants;
+      voteState.votes = payload.votes;
+      voteState.voters = payload.voters;
+      renderVoteActive();
+    }
+  });
+
+  voteChannel.on('broadcast', { event: 'end' }, ({ payload }) => {
+    renderVoteResult(payload.winner);
+  });
+
+  voteChannel.subscribe((status) => {
+    if (status === 'SUBSCRIBED') {
+      if (isHost) {
+        // Broadcast initial state
+        setTimeout(() => {
+          voteChannel.send({ type: 'broadcast', event: 'state', payload: voteState });
+        }, 500);
+      } else {
+        // Announce join
+        voteChannel.send({ type: 'broadcast', event: 'join', payload: { name: userName || 'Guest' } });
+        // Request state
+        setTimeout(() => {
+          if (!voteState.restaurants.length) {
+            showToast('Waiting for host...', false);
           }
-        });
-
-        showToast(`Booked! Enjoy ${currentSuggestion.name}! 🦕🍽️`);
-        hideAll();
-      } catch (err) {
-        console.error(err);
-        showToast('Could not log the visit!', true);
+        }, 2000);
       }
     }
+  });
+}
 
-    async function blacklistCurrent(reason) {
-      if (!currentSuggestion) return;
+function renderVoteActive() {
+  document.getElementById('voteLanding').style.display = 'none';
+  document.getElementById('voteActive').style.display = 'block';
+  document.getElementById('voteResult').style.display = 'none';
+  document.getElementById('voteCodeDisplay').textContent = voteSessionCode;
+  renderVotersList();
+  renderVoteOptions();
+}
 
-      try {
-        await supabase('restaurants', 'PATCH', {
-          query: `id=eq.${currentSuggestion.id}`,
-          body: { status: reason }
-        });
+function renderVotersList() {
+  document.getElementById('votersList').innerHTML = voteState.voters.map(v =>
+    `<span class="voter-badge">${escHtml(v)}</span>`
+  ).join('');
+}
 
-        const reasonText = reason.replace('Blacklisted - ', '').toLowerCase();
-        showToast(`Got it — ${currentSuggestion.name} is off the list (${reasonText}) 🦕`);
-        suggestDinner(lastMode);
-      } catch (err) {
-        console.error(err);
-        showToast('Could not update!', true);
-      }
+function renderVoteOptions() {
+  const myVotes = JSON.parse(localStorage.getItem(`dino_votes_${voteSessionCode}`) || '[]');
+
+  document.getElementById('voteOptions').innerHTML = voteState.restaurants.map(r => {
+    const voted = myVotes.includes(r.id);
+    const count = voteState.votes[r.id] || 0;
+    return `
+    <div class="vote-option ${voted ? 'voted' : ''}" onclick="castVote(${r.id})">
+      <div class="vote-info">
+        <h3>${escHtml(r.name)}</h3>
+        <div class="card-meta">${escHtml(r.cuisine || 'Mixed')} · ${escHtml(r.price_range || 'Mid')}</div>
+      </div>
+      <div class="vote-count">${count}</div>
+    </div>`;
+  }).join('');
+}
+
+function castVote(restaurantId) {
+  const key = `dino_votes_${voteSessionCode}`;
+  const myVotes = JSON.parse(localStorage.getItem(key) || '[]');
+
+  if (myVotes.includes(restaurantId)) {
+    // Unvote
+    const idx = myVotes.indexOf(restaurantId);
+    myVotes.splice(idx, 1);
+    voteState.votes[restaurantId] = Math.max(0, (voteState.votes[restaurantId] || 0) - 1);
+  } else {
+    myVotes.push(restaurantId);
+    voteState.votes[restaurantId] = (voteState.votes[restaurantId] || 0) + 1;
+  }
+
+  localStorage.setItem(key, JSON.stringify(myVotes));
+  vibrate();
+
+  // Broadcast vote
+  if (voteChannel) {
+    voteChannel.send({
+      type: 'broadcast', event: 'vote',
+      payload: { restaurantId, count: voteState.votes[restaurantId] }
+    });
+  }
+  renderVoteOptions();
+}
+
+function endVoteSession() {
+  // Find winner
+  let maxVotes = 0, winner = null;
+  voteState.restaurants.forEach(r => {
+    if ((voteState.votes[r.id] || 0) > maxVotes) {
+      maxVotes = voteState.votes[r.id];
+      winner = r;
     }
+  });
 
-    // --- BLACKLIST VIEW ---
-    async function showBlacklist() {
-      hideAll();
+  if (voteChannel && winner) {
+    voteChannel.send({ type: 'broadcast', event: 'end', payload: { winner } });
+  }
+  renderVoteResult(winner);
+}
 
-      try {
-        const restaurants = await supabase('restaurants', 'GET', {
-          query: 'status=neq.Available&order=name'
-        });
+function renderVoteResult(winner) {
+  document.getElementById('voteActive').style.display = 'none';
+  document.getElementById('voteResult').style.display = 'block';
 
-        blacklistData = restaurants || [];
-        blacklistFilter = 'all';
-
-        // Reset tab styles
-        document.querySelectorAll('.blacklist-tab').forEach(t => t.classList.remove('active'));
-        document.querySelector('.blacklist-tab').classList.add('active');
-
-        renderBlacklist();
-        document.getElementById('blacklistPanel').classList.add('active');
-      } catch (err) {
-        console.error(err);
-        showToast('Could not load blacklist!', true);
-      }
-    }
-
-    function filterBlacklist(filter) {
-      blacklistFilter = filter;
-      document.querySelectorAll('.blacklist-tab').forEach(t => {
-        const tabFilter = t.textContent.includes('All') ? 'all' :
-                          t.textContent.includes('Bad') ? 'Bad Food' :
-                          t.textContent.includes('far') ? 'Too Far' : 'Too Expensive';
-        t.classList.toggle('active', tabFilter === filter);
-      });
-      renderBlacklist();
-    }
-
-    function renderBlacklist() {
-      const list = document.getElementById('blacklistList');
-      let filtered = blacklistData;
-
-      if (blacklistFilter !== 'all') {
-        filtered = blacklistData.filter(r => r.status.includes(blacklistFilter));
-      }
-
-      if (filtered.length === 0) {
-        list.innerHTML = '<div class="empty-state">🦕 No blacklisted restaurants here!</div>';
-        return;
-      }
-
-      list.innerHTML = filtered.map(r => {
-        const reason = r.status.replace('Blacklisted - ', '');
-        const emoji = reason === 'Bad Food' ? '👎' : reason === 'Too Far' ? '🚶' : '💸';
-        return `
-          <div class="blacklist-item">
-            <div>
-              <div class="name">${r.name}</div>
-              <div class="cuisine-sm">${r.cuisine || 'Mixed'} · ${r.address || ''}</div>
-              <div class="reason">${emoji} ${reason}</div>
-            </div>
-            <button class="restore-btn" onclick="restoreRestaurant(${r.id}, '${r.name.replace(/'/g, "\\'")}')">✅ Restore</button>
-          </div>
-        `;
-      }).join('');
-    }
-
-    async function restoreRestaurant(id, name) {
-      try {
-        await supabase('restaurants', 'PATCH', {
-          query: `id=eq.${id}`,
-          body: { status: 'Available' }
-        });
-        showToast(`${name} is back on the menu! 🦕`);
-        showBlacklist();
-      } catch (err) {
-        console.error(err);
-        showToast('Could not restore!', true);
-      }
-    }
-
-    // --- HISTORY WITH RATINGS ---
-    // Star ratings are stored as JSON in the `notes` column: {"taste":4,"price":3,"vibe":5}
-    // (The `rating` column has a check constraint limiting it to text values like "Good")
-    function parseStarRatings(notesStr) {
-      if (!notesStr) return null;
-      try {
-        const parsed = JSON.parse(notesStr);
-        if (parsed.taste || parsed.price || parsed.vibe) return parsed;
-      } catch (e) {}
-      return null;
-    }
-
-    async function showHistory() {
-      hideAll();
-
-      try {
-        const visits = await supabase('visits', 'GET', {
-          query: 'order=visited_date.desc&limit=20',
-          select: 'id,visited_date,suggested_by,rating,notes,restaurant_id,restaurants(name,cuisine)'
-        });
-
-        const list = document.getElementById('historyList');
-        list.innerHTML = '';
-
-        if (!visits || visits.length === 0) {
-          list.innerHTML = '<div class="empty-state">🦕 No visits yet! Go eat somewhere!</div>';
-        } else {
-          visits.forEach(v => {
-            const name = v.restaurants ? v.restaurants.name : `Restaurant #${v.restaurant_id}`;
-            const date = new Date(v.visited_date).toLocaleDateString('sv-SE');
-            const div = document.createElement('div');
-            div.className = 'history-item';
-            div.id = `visit-${v.id}`;
-
-            const starRatings = parseStarRatings(v.notes);
-
-            let ratingsHTML = '';
-            if (starRatings) {
-              ratingsHTML = `<div class="ratings">
-                ${starRatings.taste ? `<span class="rating-badge rating-taste">Taste ${'★'.repeat(starRatings.taste)}${'☆'.repeat(5-starRatings.taste)}</span>` : ''}
-                ${starRatings.price ? `<span class="rating-badge rating-price">Price ${'★'.repeat(starRatings.price)}${'☆'.repeat(5-starRatings.price)}</span>` : ''}
-                ${starRatings.vibe ? `<span class="rating-badge rating-vibe">Vibe ${'★'.repeat(starRatings.vibe)}${'☆'.repeat(5-starRatings.vibe)}</span>` : ''}
-              </div>`;
-            } else {
-              ratingsHTML = `<button class="rate-btn" onclick="showRatingForm(${v.id})">Rate this visit</button>`;
-            }
-
-            div.innerHTML = `
-              <div class="history-item-header">
-                <div>
-                  <div class="name">${name}</div>
-                  <div class="meta">by ${v.suggested_by || 'unknown'}</div>
-                </div>
-                <div class="date">${date}</div>
-              </div>
-              ${ratingsHTML}
-              <div class="blacklist-history-wrap" id="bl-wrap-${v.id}">
-                <button class="rate-btn" onclick="showBlacklistOptions(${v.id}, ${v.restaurant_id}, '${name.replace(/'/g, "\\'")}')">🚫 Blacklist</button>
-              </div>
-            `;
-            list.appendChild(div);
-          });
-        }
-
-        document.getElementById('historyPanel').classList.add('active');
-      } catch (err) {
-        console.error(err);
-        showToast('Could not load history!', true);
-      }
-    }
-
-    function showRatingForm(visitId) {
-      const item = document.getElementById(`visit-${visitId}`);
-      const btn = item.querySelector('.rate-btn');
-      if (btn) btn.remove();
-
-      const existing = item.querySelector('.rating-form');
-      if (existing) return;
-
-      const form = document.createElement('div');
-      form.className = 'rating-form';
-      form.innerHTML = `
-        <div class="rating-row">
-          <label>🍽️ Taste</label>
-          <div class="star-selector" data-field="taste" data-visit="${visitId}">
-            ${[1,2,3,4,5].map(n => `<span onclick="setStar(this, ${n})">★</span>`).join('')}
-          </div>
+  if (winner) {
+    document.getElementById('voteResult').innerHTML = `
+      <div class="vote-winner">
+        <div style="font-size:3em;margin-bottom:8px">🎉</div>
+        <h2>${escHtml(winner.name)}</h2>
+        <div class="card-tags" style="justify-content:center;margin:8px 0">
+          <span class="tag tag-gold">${escHtml(winner.cuisine || 'Mixed')}</span>
+          <span class="tag tag-muted">${escHtml(winner.price_range || 'Mid')}</span>
         </div>
-        <div class="rating-row">
-          <label>💰 Price</label>
-          <div class="star-selector" data-field="price" data-visit="${visitId}">
-            ${[1,2,3,4,5].map(n => `<span onclick="setStar(this, ${n})">★</span>`).join('')}
-          </div>
-        </div>
-        <div class="rating-row">
-          <label>✨ Vibe</label>
-          <div class="star-selector" data-field="vibe" data-visit="${visitId}">
-            ${[1,2,3,4,5].map(n => `<span onclick="setStar(this, ${n})">★</span>`).join('')}
-          </div>
-        </div>
-        <button class="submit-btn" onclick="submitRating(${visitId})">Save rating 🦕</button>
-      `;
-      item.appendChild(form);
-    }
+        <p style="color:var(--text-dim);margin:12px 0">${winner.address ? '📍 ' + escHtml(winner.address) : ''}</p>
+        <div class="vote-count">${voteState.votes[winner.id] || 0} votes</div>
+        <button class="btn btn-primary mt-12" onclick="confirmVoteWinner(${winner.id},'${escAttr(winner.name)}')">Let's go!</button>
+        <button class="btn btn-ghost mt-12" onclick="resetVote()">New vote</button>
+      </div>
+    `;
+    fireConfetti();
+  } else {
+    document.getElementById('voteResult').innerHTML = `
+      <div class="empty-state"><div class="empty-icon">🤷</div><p>No votes were cast!</p>
+      <button class="btn btn-secondary mt-12" onclick="resetVote()">Try again</button></div>
+    `;
+  }
+}
 
-    function setStar(el, value) {
-      const container = el.parentElement;
-      container.dataset.value = value;
-      const stars = container.querySelectorAll('span');
-      stars.forEach((s, i) => s.classList.toggle('active', i < value));
-    }
+async function confirmVoteWinner(id, name) {
+  try {
+    await api('visits', 'POST', {
+      body: { restaurant_id: id, visited_date: new Date().toISOString().split('T')[0], suggested_by: userName || 'Group vote', rating: 'Good' }
+    });
+    showToast(`Booked ${name}!`);
+    fireConfetti();
+  } catch (err) {
+    console.error(err); showToast('Could not log visit!', true);
+  }
+}
 
-    async function submitRating(visitId) {
-      const item = document.getElementById(`visit-${visitId}`);
-      const taste = item.querySelector('[data-field="taste"]')?.dataset.value;
-      const price = item.querySelector('[data-field="price"]')?.dataset.value;
-      const vibe = item.querySelector('[data-field="vibe"]')?.dataset.value;
+function resetVote() {
+  if (voteChannel) { sb.removeChannel(voteChannel); voteChannel = null; }
+  document.getElementById('voteLanding').style.display = 'block';
+  document.getElementById('voteActive').style.display = 'none';
+  document.getElementById('voteResult').style.display = 'none';
+}
 
-      if (!taste && !price && !vibe) {
-        showToast('Tap some stars first!', true);
-        return;
-      }
+function copyVoteLink() {
+  const url = `${window.location.origin}${window.location.pathname}?vote=${voteSessionCode}`;
+  navigator.clipboard.writeText(url).then(() => showToast('Link copied!')).catch(() => {
+    showToast(url, false); // Fallback: show the URL
+  });
+}
 
-      try {
-        const ratingObj = {};
-        if (taste) ratingObj.taste = parseInt(taste);
-        if (price) ratingObj.price = parseInt(price);
-        if (vibe) ratingObj.vibe = parseInt(vibe);
+// ============================================================
+// CONFETTI
+// ============================================================
+function fireConfetti() {
+  const canvas = document.getElementById('confetti');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
 
-        await supabase('visits', 'PATCH', {
-          query: `id=eq.${visitId}`,
-          body: { notes: JSON.stringify(ratingObj) }
-        });
+  const colors = ['#c9a84c', '#e8d5a3', '#fff', '#a8893a', '#d4d0c8'];
+  const particles = Array.from({ length: 80 }, () => ({
+    x: canvas.width / 2 + (Math.random() - 0.5) * 200,
+    y: canvas.height / 2,
+    vx: (Math.random() - 0.5) * 12,
+    vy: Math.random() * -14 - 4,
+    size: Math.random() * 6 + 3,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    rotation: Math.random() * 360,
+    rotSpeed: (Math.random() - 0.5) * 10,
+    gravity: 0.3 + Math.random() * 0.2,
+    life: 1
+  }));
 
-        showToast('Rating saved! 🦕⭐');
-        showHistory();
-      } catch (err) {
-        console.error(err);
-        showToast('Could not save rating!', true);
-      }
-    }
+  let frame;
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let alive = false;
+    particles.forEach(p => {
+      if (p.life <= 0) return;
+      alive = true;
+      p.x += p.vx;
+      p.vy += p.gravity;
+      p.y += p.vy;
+      p.rotation += p.rotSpeed;
+      p.life -= 0.012;
+      p.vx *= 0.99;
 
-    function showBlacklistOptions(visitId, restaurantId, name) {
-      const wrap = document.getElementById(`bl-wrap-${visitId}`);
-      wrap.innerHTML = `
-        <div class="action-btns" style="margin-top:0">
-          <button class="action-btn btn-nope" onclick="blacklistFromHistory(${restaurantId}, '${name.replace(/'/g, "\\'")}', 'Bad Food')">Bad food</button>
-          <button class="action-btn btn-far" onclick="blacklistFromHistory(${restaurantId}, '${name.replace(/'/g, "\\'")}', 'Too Far')">Too far</button>
-          <button class="action-btn btn-expensive" onclick="blacklistFromHistory(${restaurantId}, '${name.replace(/'/g, "\\'")}', 'Too Expensive')">Too pricey</button>
-        </div>
-      `;
-    }
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation * Math.PI / 180);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = p.life;
+      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+      ctx.restore();
+    });
+    if (alive) frame = requestAnimationFrame(animate);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  if (frame) cancelAnimationFrame(frame);
+  animate();
+}
 
-    async function blacklistFromHistory(restaurantId, name, reason) {
-      try {
-        await supabase('restaurants', 'PATCH', {
-          query: `id=eq.${restaurantId}`,
-          body: { status: `Blacklisted - ${reason}` }
-        });
-        showToast(`${name} has been blacklisted`);
-        showHistory();
-      } catch (err) {
-        console.error(err);
-        showToast('Could not blacklist!', true);
-      }
-    }
+// ============================================================
+// UTILS
+// ============================================================
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast show ${isError ? 'error' : ''}`;
+  setTimeout(() => t.className = 'toast', 3000);
+}
 
-    function showAddPanel() {
-      hideAll();
-      document.getElementById('addPanel').classList.add('active');
-    }
+function vibrate(ms = 30) {
+  if (navigator.vibrate) navigator.vibrate(ms);
+}
 
-    async function addRestaurant() {
-      const name = document.getElementById('addName').value.trim();
-      const cuisine = document.getElementById('addCuisine').value.trim();
-      const address = document.getElementById('addAddress').value.trim();
-      const walking = parseInt(document.getElementById('addWalking').value) || 0;
-      const price = document.getElementById('addPrice').value;
-      const notes = document.getElementById('addNotes').value.trim();
+function escHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
 
-      if (!name) {
-        showToast('Give the restaurant a name!', true);
-        return;
-      }
+function escAttr(s) {
+  return (s || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
 
-      try {
-        await supabase('restaurants', 'POST', {
-          body: { name, cuisine, address, walking_minutes: walking, price_range: price, notes }
-        });
-
-        showToast(`Added ${name} to Dino's list! 🦕`);
-        hideAll();
-
-        document.getElementById('addName').value = '';
-        document.getElementById('addCuisine').value = '';
-        document.getElementById('addAddress').value = '';
-        document.getElementById('addWalking').value = '';
-        document.getElementById('addNotes').value = '';
-      } catch (err) {
-        console.error(err);
-        showToast('Could not add restaurant!', true);
-      }
-    }
-
-    function hideAll() {
-      document.getElementById('suggestionCard').classList.remove('active');
-      document.getElementById('historyPanel').classList.remove('active');
-      document.getElementById('addPanel').classList.remove('active');
-      document.getElementById('blacklistPanel').classList.remove('active');
-    }
-
-    function showToast(msg, isError = false) {
-      const toast = document.getElementById('toast');
-      toast.textContent = msg;
-      toast.className = `toast show ${isError ? 'error' : ''}`;
-      setTimeout(() => toast.className = 'toast', 3000);
-    }
-
-    init();
-  </script>
+// ============================================================
+// START
+// ============================================================
+init();
+</script>
 </body>
 </html>
